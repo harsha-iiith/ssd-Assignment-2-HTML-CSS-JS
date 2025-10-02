@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stoplight Game - Nash Equilibrium</title>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --panel: #ffffff;
+            --border: #d9e0e7;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --warn: #f59e0b;
+            --danger: #dc2626;
+            --info: #0d9488;
+            --success: #16a34a;
+            --text: #1f2933;
+            --muted: #5f6b76;
+            --radius: 12px;
+            --shadow: 0 2px 4px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.06);
+            --focus: 0 0 0 3px rgba(37,99,235,.35);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.45;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 18px 70px;
+        }
+        h1 {
+            margin: 0 0 6px;
+            font-size: clamp(1.7rem,3.3vw,2.2rem);
+            font-weight: 650;
+            color: #222f3a;
+            text-align: center;
+        }
+        p { margin: 0 0 14px; }
+        .container {
+            width: 100%;
+            max-width: 680px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 30px 26px 46px;
+            position: relative;
+            box-shadow: var(--shadow);
+        }
+        .game-area { margin: 20px 0 10px; text-align:center; }
+        .game-area h3 { margin:0 0 4px; font-size:1rem; font-weight:600; }
+        #lightAssignment { font-size:.9rem; color: var(--muted); }
+        button {
+            appearance: none;
+            border: 1px solid var(--primary);
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            padding: 10px 22px 11px;
+            font-size: .9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 6px 2px;
+            transition: background .2s, transform .15s, box-shadow .25s;
+            box-shadow: 0 1px 2px rgba(0,0,0,.08),0 2px 6px -2px rgba(0,0,0,.18);
+        }
+        button:nth-of-type(2) { background: var(--warn); border-color: var(--warn); }
+        button:hover { background: var(--primary-hover); }
+        button:nth-of-type(2):hover { background:#d97706; }
+        button:active { transform: translateY(2px); }
+        button:focus-visible { outline:none; box-shadow: var(--focus); }
+        .result {
+            margin-top: 28px;
+            padding: 20px 20px 24px;
+            background: #f0f5ff;
+            border: 1px solid #c7dcff;
+            border-radius: 10px;
+            font-size:.88rem;
+        }
+        .result h3 { margin:0 0 10px; font-size:.9rem; letter-spacing:.4px; text-transform:uppercase; font-weight:700; color:#1f2933; }
+        .equilibrium { color: var(--success); font-weight:700; }
+        .not-equilibrium { color: var(--danger); font-weight:700; }
+        .info-icon {
+            position:absolute; top:12px; right:12px;
+            width:38px; height:38px;
+            background: var(--primary);
+            border: none; color:#fff;
+            font-weight:600; font-size:16px;
+            border-radius:10px; cursor:pointer; display:grid; place-items:center;
+            transition: background .2s, transform .2s;
+        }
+        .info-icon:hover { background: var(--primary-hover); }
+        .info-icon:active { transform: scale(.92); }
+        .modal { display:none; position:fixed; inset:0; background: rgba(0,0,0,.4); backdrop-filter: blur(2px); padding: 30px 16px; }
+        .modal-content {
+            background: #ffffff; color: var(--text);
+            margin: 0 auto; max-width:560px; padding: 26px 24px 36px;
+            border: 1px solid var(--border); border-radius: 16px; position: relative; box-shadow: var(--shadow);
+        }
+        .modal-content h2 { margin-top:0; font-size:1.2rem; }
+        .modal-content p, .modal-content ul { font-size:.85rem; }
+        .modal-content ul { padding-left: 18px; margin: 6px 0 14px; }
+        .close { position:absolute; top:10px; right:12px; width:36px; height:36px; line-height:36px; text-align:center; background:#eef2f6; border-radius:8px; font-size:20px; cursor:pointer; color:#4b5563; transition: background .2s; }
+        .close:hover { background:#e2e8f0; }
+        @media (max-width: 640px) {
+            body { padding-top: 26px; }
+            .container { padding: 26px 18px 40px; }
+            button { width: calc(50% - 8px); padding: 10px 0 11px; font-size:.82rem; }
+            .result { padding:18px 16px 22px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="info-icon" onclick="showInfo()">?</button>
+        <h1>Stoplight Game - Nash Equilibrium</h1>
+        <p>This game illustrates Nash Equilibrium where following the stoplight rules is optimal.</p>
+        
+        <div class="game-area">
+            <h3>Round <span id="round">1</span></h3>
+            <p id="lightAssignment">Lights are being assigned...</p>
+            <button onclick="humanChoose('Go')">Go</button>
+            <button onclick="humanChoose('Stop')">Stop</button>
+        </div>
+        
+        <div class="result" id="result" style="display: none;">
+            <h3>Result:</h3>
+            <p id="choices"></p>
+            <p id="payoffs"></p>
+            <p id="equilibriumCheck"></p>
+            <button onclick="nextRound()">Next Round</button>
+        </div>
+    </div>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="hideInfo()">&times;</span>
+            <h2>About the Stoplight Game</h2>
+            <p><strong>Game Theory Concept:</strong> This game demonstrates Nash Equilibrium, where no player can benefit by changing their strategy unilaterally.</p>
+            <p><strong>How It Works:</strong> Two players (you and the computer) approach an intersection. One has a green light, the other has red. Each chooses to "Go" or "Stop".</p>
+            <p><strong>Payoffs:</strong></p>
+            <ul>
+                <li>Both Go: Crash (-10 for both)</li>
+                <li>Both Stop: Awkward wait (-5 for both)</li>
+                <li>Green Goes, Red Stops: Go player gets +10, Stop player gets 0</li>
+            </ul>
+            <p><strong>Nash Equilibrium:</strong> Occurs when the player with green goes and the player with red stops. Neither wants to deviate because it would lead to a worse outcome (crash or unnecessary stop).</p>
+            <p><strong>Computer Strategy:</strong> Always follows the equilibrium (goes if green, stops if red) to illustrate optimal play.</p>
+            <p><strong>Your Goal:</strong> Play multiple rounds to see how following the "rules" leads to stable, optimal outcomes!</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables to track game state
+        let round = 1; // Current round number
+        let humanLight = ''; // Human's light color (Green or Red)
+        let computerLight = ''; // Computer's light color (Green or Red)
+        let humanChoice = ''; // Human's choice (Go or Stop)
+        let computerChoice = ''; // Computer's choice (Go or Stop)
+        let humanPayoff = 0; // Human's payoff for the round
+        let computerPayoff = 0; // Computer's payoff for the round
+
+        // Function to start a new round
+        function nextRound() {
+            round++; // Increment round number
+            document.getElementById('round').textContent = round; // Update round display
+            document.getElementById('result').style.display = 'none'; // Hide previous result
+            assignLights(); // Randomly assign lights
+        }
+
+        // Function to randomly assign lights to players
+        function assignLights() {
+            if (Math.random() < 0.5) { // 50% chance for each assignment
+                humanLight = 'Green'; // Human gets green
+                computerLight = 'Red'; // Computer gets red
+            } else {
+                humanLight = 'Red'; // Human gets red
+                computerLight = 'Green'; // Computer gets green
+            }
+            document.getElementById('lightAssignment').textContent = `You have ${humanLight} light, Computer has ${computerLight} light. Choose your action!`; // Display assignment
+        }
+
+        // Function for human's choice
+        function humanChoose(choice) {
+            humanChoice = choice; // Set human's choice
+            computerChoice = computerPlay(); // Computer makes a choice (always follows equilibrium strategy)
+            calculatePayoffs(); // Calculate payoffs based on choices
+            displayResult(); // Show the result
+        }
+
+        // Function for computer's choice (always plays Nash equilibrium strategy)
+        function computerPlay() {
+            if (computerLight === 'Green') {
+                return 'Go'; // If computer has green, it goes (equilibrium)
+            } else {
+                return 'Stop'; // If computer has red, it stops (equilibrium)
+            }
+        }
+
+        // Function to calculate payoffs based on the payoff matrix
+        function calculatePayoffs() {
+            if (humanChoice === 'Go' && computerChoice === 'Go') {
+                // Both go: Crash (bad for both)
+                humanPayoff = -10; // Bad outcome
+                computerPayoff = -10; // Bad outcome
+            } else if (humanChoice === 'Stop' && computerChoice === 'Stop') {
+                // Both stop: Awkward wait (mediocre)
+                humanPayoff = -5; // Mediocre outcome
+                computerPayoff = -5; // Mediocre outcome
+            } else if (humanChoice === 'Go' && computerChoice === 'Stop') {
+                // Human goes, computer stops: Human gets good, computer gets okay
+                humanPayoff = 10; // Good for human
+                computerPayoff = 0; // Okay for computer
+            } else if (humanChoice === 'Stop' && computerChoice === 'Go') {
+                // Human stops, computer goes: Computer gets good, human gets okay
+                humanPayoff = 0; // Okay for human
+                computerPayoff = 10; // Good for computer
+            }
+        }
+
+        // Function to display the result
+        function displayResult() {
+            const choices = `You chose: ${humanChoice}, Computer chose: ${computerChoice}`; // Show choices
+            const payoffs = `Your payoff: ${humanPayoff}, Computer's payoff: ${computerPayoff}`; // Show payoffs
+            const isEquilibrium = isNashEquilibrium(); // Check if it's Nash equilibrium
+            const equilibriumText = isEquilibrium ? 'This is a Nash Equilibrium!' : 'This is NOT a Nash Equilibrium.'; // Equilibrium message
+            const equilibriumClass = isEquilibrium ? 'equilibrium' : 'not-equilibrium'; // CSS class for styling
+
+            document.getElementById('choices').textContent = choices; // Update choices display
+            document.getElementById('payoffs').textContent = payoffs; // Update payoffs display
+            document.getElementById('equilibriumCheck').textContent = equilibriumText; // Update equilibrium check
+            document.getElementById('equilibriumCheck').className = equilibriumClass; // Apply styling
+            document.getElementById('result').style.display = 'block'; // Show result
+        }
+
+        // Function to check if current outcome is a Nash Equilibrium
+        function isNashEquilibrium() {
+            // Nash Equilibrium when the player with green goes and the one with red stops
+            if (humanLight === 'Green' && humanChoice === 'Go' && computerLight === 'Red' && computerChoice === 'Stop') {
+                return true; // Human has green and goes, computer has red and stops
+            } else if (humanLight === 'Red' && humanChoice === 'Stop' && computerLight === 'Green' && computerChoice === 'Go') {
+                return true; // Human has red and stops, computer has green and goes
+            }
+            return false; // Otherwise, not equilibrium
+        }
+
+        // Initialize the first round
+        assignLights(); // Assign lights for the first round
+
+        // Function to show the info modal
+        function showInfo() {
+            document.getElementById('infoModal').style.display = 'block'; // Display the modal
+        }
+
+        // Function to hide the info modal
+        function hideInfo() {
+            document.getElementById('infoModal').style.display = 'none'; // Hide the modal
+        }
+    </script>
+</body>
+</html>

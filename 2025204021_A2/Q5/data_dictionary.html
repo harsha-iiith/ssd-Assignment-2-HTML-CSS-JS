@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Relational Data Dictionary & Relationship Diagram</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0d1117;
+        --bg-alt: #161d27;
+        --panel: #1e2733;
+        --panel-border: #2b3948;
+        --primary: #0d6efd;
+        --accent: #8b5cf6;
+        --danger: #ef4444;
+        --warn: #f59e0b;
+        --success: #22c55e;
+        --text: #e6edf3;
+        --muted: #9ca3af;
+        --radius: 14px;
+        --radius-sm: 8px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Quicksand, system-ui, Roboto, sans-serif;
+        background: radial-gradient(circle at 18% 20%, #182333, #0d1117 70%)
+          fixed;
+        color: var(--text);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      header {
+        padding: 28px clamp(16px, 4vw, 48px) 18px;
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: clamp(1.9rem, 3.8vw, 2.6rem);
+        letter-spacing: 0.5px;
+        background: linear-gradient(90deg, #4dd2ff, #52ffa8, #c084fc);
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+      h2 {
+        margin: 28px 0 12px;
+        font-size: 1.45rem;
+        letter-spacing: 0.5px;
+      }
+      p {
+        margin: 6px 0 14px;
+      }
+      a {
+        color: #52c7ff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      main {
+        max-width: 1420px;
+        margin: 0 auto 140px;
+        padding: 0 clamp(14px, 3vw, 44px) 70px;
+      }
+      .grid {
+        display: grid;
+        gap: 28px;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      }
+      .panel {
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.065),
+          rgba(255, 255, 255, 0.02)
+        );
+        border: 1px solid var(--panel-border);
+        padding: 22px clamp(14px, 1.8vw, 26px) 28px;
+        border-radius: var(--radius);
+        position: relative;
+        backdrop-filter: blur(14px) saturate(160%);
+        -webkit-backdrop-filter: blur(14px) saturate(160%);
+        box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.55),
+          0 10px 36px -12px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+      }
+      .panel h3 {
+        margin: 0 0 14px;
+        font-size: 1.05rem;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        color: #fff;
+      }
+      textarea,
+      pre,
+      input[type="file"] {
+        width: 100%;
+        font-family: ui-monospace, Consolas, monaco, monospace;
+        background: #111b26;
+        color: var(--text);
+        border: 1px solid #2c3b48;
+        border-radius: var(--radius-sm);
+        padding: 12px 14px;
+        resize: vertical;
+        font-size: 0.85rem;
+        line-height: 1.4;
+      }
+      textarea:focus,
+      input:focus {
+        outline: 2px solid var(--primary);
+      }
+      textarea {
+        min-height: 200px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 12px 0 4px;
+      }
+      button {
+        --btn: var(--primary);
+        --btn-text: #fff;
+        appearance: none;
+        background: linear-gradient(
+          180deg,
+          var(--btn),
+          var(--btn) 55%,
+          rgba(0, 0, 0, 0.35)
+        );
+        border: none;
+        color: var(--btn-text);
+        padding: 11px 22px 12px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        cursor: pointer;
+        box-shadow: 0 3px 10px -2px rgba(0, 0, 0, 0.6),
+          0 6px 22px -8px rgba(0, 0, 0, 0.55);
+        position: relative;
+        transition: filter 0.35s, transform 0.25s, box-shadow 0.4s;
+      }
+      button.secondary {
+        --btn: #374151;
+      }
+      button.warn {
+        --btn: var(--warn);
+      }
+      button.accent {
+        --btn: var(--accent);
+      }
+      button.success {
+        --btn: var(--success);
+      }
+      button.danger {
+        --btn: var(--danger);
+      }
+      button:hover {
+        filter: brightness(1.1);
+        transform: translateY(-3px);
+      }
+      button:active {
+        transform: translateY(1px) scale(0.97);
+      }
+      button:focus-visible {
+        outline: 3px solid rgba(82, 199, 255, 0.65);
+        outline-offset: 2px;
+      }
+      button:disabled {
+        background: linear-gradient(
+          180deg,
+          #6b7280,
+          #6b7280 55%,
+          rgba(0, 0, 0, 0.4)
+        );
+        cursor: not-allowed;
+        filter: grayscale(0.3) brightness(0.9);
+      }
+      #status {
+        margin: 4px 0 0;
+        font-size: 0.78rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .flex {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .small {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 6px 8px 7px;
+        border-bottom: 1px solid #26323f;
+        vertical-align: top;
+      }
+      th {
+        background: #17222e;
+        font-weight: 600;
+        font-size: 0.72rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: #cbd5e1;
+      }
+      tbody tr:hover {
+        background: #182736;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px 3px;
+        border-radius: 999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        background: var(--primary);
+        color: #fff;
+        margin-right: 4px;
+      }
+      .badge.dark {
+        background: #374151;
+      }
+      .badge.pk {
+        background: var(--success);
+      }
+      .badge.fk {
+        background: var(--warn);
+        color: #222;
+      }
+      .badge.nn {
+        background: #ef4444;
+      }
+      .metrics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 4px 0 14px;
+      }
+      .metric {
+        background: #17222e;
+        padding: 10px 14px 12px;
+        border-radius: 12px;
+        border: 1px solid #2a3947;
+        font-size: 0.72rem;
+        letter-spacing: 0.5px;
+        flex: 1;
+        min-width: 140px;
+        position: relative;
+        overflow: hidden;
+      }
+      .metric b {
+        display: block;
+        font-size: 1.1rem;
+        margin-bottom: 2px;
+        color: #fff;
+      }
+      #diagramWrapper {
+        position: relative;
+        height: 620px;
+        background: #0e171f;
+        border: 1px solid #243240;
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      #diagram {
+        width: 100%;
+        height: 100%;
+      }
+      .node {
+        cursor: pointer;
+      }
+      .node rect {
+        fill: url(#nodeGradient);
+        stroke: #3b4d5e;
+        stroke-width: 1.1;
+        rx: 10;
+      }
+      .node.selected rect {
+        stroke: #52ffa8;
+        stroke-width: 2;
+        filter: drop-shadow(0 0 6px rgba(82, 255, 168, 0.4));
+      }
+      .edge {
+        stroke: #4dc3ff;
+        stroke-width: 1.6;
+        marker-end: url(#arrow);
+        opacity: 0.9;
+      }
+      .edge.m2m {
+        stroke: #e879f9;
+      }
+      .edge.on-delete-cascade {
+        stroke: #22c55e;
+      }
+      .legend {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.45);
+        padding: 8px 12px 10px;
+        border-radius: 10px;
+        font-size: 0.62rem;
+        letter-spacing: 0.4px;
+        line-height: 1.15;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      .legend div {
+        margin: 2px 0 3px;
+        white-space: nowrap;
+      }
+      .filter-bar {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+        margin: 2px 0 16px;
+      }
+      .filter-bar input {
+        flex: 3 1 240px;
+      }
+      .pill-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .pill {
+        font-size: 0.6rem;
+        letter-spacing: 0.4px;
+        padding: 3px 10px 5px;
+        border-radius: 999px;
+        background: #223040;
+        border: 1px solid #314355;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .pill.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+      }
+      details {
+        border: 1px solid #263542;
+        border-radius: 12px;
+        padding: 14px 18px 18px;
+        background: #16222c;
+      }
+      details summary {
+        cursor: pointer;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        margin: -14px -18px 12px;
+        padding: 14px 18px;
+        background: #192a34;
+        border-radius: 12px;
+        list-style: none;
+      }
+      details[open] summary {
+        border-bottom: 1px solid #253644;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      code.inline {
+        background: #1e2d39;
+        padding: 2px 6px 3px;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-family: ui-monospace, Consolas, monaco, monospace;
+      }
+      pre {
+        max-height: 320px;
+        overflow: auto;
+        line-height: 1.35;
+      }
+      mark {
+        background: #fde047;
+        color: #222;
+        padding: 1px 4px 2px;
+        border-radius: 4px;
+      }
+      footer {
+        position: fixed;
+        inset: auto 0 0 0;
+        background: #0a1219d9;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-top: 1px solid #1e2b36;
+        padding: 10px clamp(12px, 3vw, 60px) 14px;
+        font-size: 0.65rem;
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .export-note {
+        color: var(--muted);
+        font-size: 0.6rem;
+      }
+      @media (max-width: 860px) {
+        #diagramWrapper {
+          height: 560px;
+        }
+      }
+      @media (max-width: 640px) {
+        main {
+          padding: 0 14px 120px;
+        }
+        footer {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .metrics {
+          flex-direction: column;
+        }
+      }
+      @media print {
+        body {
+          background: #fff;
+          color: #111;
+        }
+        header,
+        footer,
+        .no-print {
+          box-shadow: none;
+        }
+        header {
+          padding: 12px 0 8px;
+        }
+        .panel,
+        details,
+        #diagramWrapper {
+          background: #fff !important;
+          border-color: #777;
+          box-shadow: none;
+        }
+        .node rect {
+          stroke: #000 !important;
+        }
+        button,
+        .no-print,
+        .legend {
+          display: none !important;
+        }
+        a {
+          color: #000;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Relational Data Dictionary</h1>
+      <p style="margin: 6px 0 0; font-size: 0.9rem; color: var(--muted)">
+        Interactive schema explorer & relationship diagram generator
+      </p>
+    </header>
+    <main>
+      <section class="panel" id="inputPanel">
+        <h2 style="margin-top: 0">1. Provide Schema Definition</h2>
+        <p style="margin-top: -4px">
+          Paste / edit JSON (preferred) or load JSON / XML file. Then click
+          <strong>Generate Dictionary</strong>. An inline regex-based
+          <em>experimental</em> SQL DDL parser for
+          <code class="inline">CREATE TABLE</code> is also available.
+        </p>
+        <div class="actions no-print">
+          <input type="file" id="fileInput" accept=".json,.xml,.txt,.sql" />
+          <button onclick="loadFile()" class="secondary">Load File</button>
+          <button onclick="formatJson()" class="accent">Format JSON</button>
+          <button onclick="insertSample()" class="success">
+            Insert Sample
+          </button>
+          <button
+            onclick="parseDDL()"
+            class="warn"
+            title="Parse raw CREATE TABLE statements below (experimental)"
+          >
+            Parse SQL DDL
+          </button>
+          <button onclick="generate()" class="danger" style="margin-left: auto">
+            Generate Dictionary ▶
+          </button>
+        </div>
+        <textarea
+          id="schemaInput"
+          placeholder='{ \n  "tables": [ ... ], \n  "relationships": [ ... ]\n}'
+        ></textarea>
+        <div id="status">Idle</div>
+      </section>
+
+      <section class="panel" id="summaryPanel" style="display: none">
+        <h2 style="margin-top: 0">2. Overview & Metrics</h2>
+        <div class="metrics" id="metrics"></div>
+        <div class="filter-bar no-print">
+          <input
+            id="searchBox"
+            placeholder="Search table / column / comment"
+            oninput="renderTables()"
+          />
+          <div class="pill-group" id="typeFilters"></div>
+          <button class="secondary" onclick="resetFilters()">
+            Reset Filters
+          </button>
+          <button
+            onclick="highlightOrphans()"
+            class="warn"
+            title="Tables with no FK in or out"
+          >
+            Show Orphans
+          </button>
+        </div>
+        <div id="tableList"></div>
+      </section>
+
+      <section class="panel" id="diagramPanel" style="display: none">
+        <h2 style="margin-top: 0">3. Relationship Diagram</h2>
+        <p class="small" style="margin-top: -6px">
+          Click a node to focus its neighborhood. Edges arrows point
+          <strong>FROM</strong> FK table <strong>TO</strong> PK table. Colors
+          encode relationship type and delete rule.
+        </p>
+        <div id="diagramWrapper">
+          <svg id="diagram"></svg>
+          <div class="legend no-print">
+            <div>
+              <span
+                style="
+                  display: inline-block;
+                  width: 12px;
+                  height: 2px;
+                  background: #4dc3ff;
+                  margin-right: 6px;
+                "
+              ></span
+              >1:N or M:1
+            </div>
+            <div>
+              <span
+                style="
+                  display: inline-block;
+                  width: 12px;
+                  height: 2px;
+                  background: #e879f9;
+                  margin-right: 6px;
+                "
+              ></span
+              >M:N (bridge)
+            </div>
+            <div>
+              <span
+                style="
+                  display: inline-block;
+                  width: 12px;
+                  height: 2px;
+                  background: #22c55e;
+                  margin-right: 6px;
+                "
+              ></span
+              >ON DELETE CASCADE
+            </div>
+            <div style="margin-top: 4px; opacity: 0.75">
+              Double-click: center / zoom
+            </div>
+          </div>
+        </div>
+        <div class="actions no-print" style="margin-top: 16px">
+          <button onclick="fitDiagram()" class="secondary">Fit Diagram</button>
+          <button onclick="exportHTML()" class="success">
+            Export Static HTML
+          </button>
+          <button onclick="window.print()" class="accent">
+            Export PDF (Print)
+          </button>
+        </div>
+      </section>
+
+      <section class="panel" id="instructionsPanel">
+        <h2 style="margin-top: 0">4. Input Format & Extraction Guide</h2>
+        <details open>
+          <summary>JSON Schema Format (Preferred)</summary>
+          <p>
+            Provide a JSON with two top-level arrays:
+            <code class="inline">tables</code> and optional
+            <code class="inline">relationships</code>. Each table:
+          </p>
+          <pre id="formatExample">
+{
+  "tables": [
+    {
+      "name": "employees",
+      "comment": "Employee master table",
+      "columns": [
+        {"name": "id", "type": "serial", "primary": true, "nullable": false, "comment": "PK"},
+        {"name": "dept_id", "type": "int", "nullable": false, "references": {"table": "departments", "column": "id", "onDelete": "CASCADE"}},
+        {"name": "name", "type": "varchar(100)", "nullable": false},
+        {"name": "email", "type": "varchar(255)", "unique": true}
+      ],
+      "indexes": [ {"name":"uq_employees_email", "columns":["email"], "unique":true} ]
+    }
+  ],
+  "relationships": [
+    { "from": "employees.dept_id", "to": "departments.id", "type": "many-to-one", "onDelete": "CASCADE" }
+  ]
+}</pre
+          >
+          <p>
+            Relationships are auto-inferred from
+            <code class="inline">references</code> inside columns if you leave
+            <code class="inline">relationships</code> blank.
+          </p>
+        </details>
+        <details>
+          <summary>Alternate XML Format</summary>
+          <pre>
+&lt;schema&gt;
+  &lt;table name="departments" comment="Department master"&gt;
+    &lt;column name="id" type="int" primary="true" nullable="false" /&gt;
+    &lt;column name="name" type="varchar(80)" nullable="false" unique="true" /&gt;
+  &lt;/table&gt;
+  &lt;table name="employees" comment="Employees"&gt;
+    &lt;column name="id" type="int" primary="true" nullable="false" /&gt;
+    &lt;column name="dept_id" type="int" nullable="false" references="departments.id" onDelete="CASCADE" /&gt;
+    &lt;column name="name" type="varchar(100)" nullable="false" /&gt;
+  &lt;/table&gt;
+&lt;/schema&gt;</pre
+          >
+        </details>
+        <details>
+          <summary>Quick DDL Parsing (Experimental)</summary>
+          <p>
+            Paste plain <code class="inline">CREATE TABLE</code> statements in
+            the input box and press <mark>Parse SQL DDL</mark>. Extracts
+            <strong>columns</strong>, <strong>PK</strong>,
+            <strong>FK</strong> (simple) & inline
+            <code class="inline">REFERENCES</code>. Complex constraints
+            (composite PK, check expressions, multi-column FKs) may need manual
+            adjustment.
+          </p>
+        </details>
+        <details>
+          <summary>Generating JSON From Your Database</summary>
+          <p><strong>PostgreSQL (psql)</strong></p>
+          <pre>
+psql -d mydb -X -A -t -F $'\t' -c "\
+WITH cols AS (\n  SELECT table_schema, table_name, column_name, data_type, is_nullable,\n         ordinal_position, udt_name, character_maximum_length, column_default\n  FROM information_schema.columns WHERE table_schema='public'\n), pk AS (\n  SELECT tc.table_name, kc.column_name\n  FROM information_schema.table_constraints tc\n  JOIN information_schema.key_column_usage kc USING (constraint_name, table_schema)\n  WHERE tc.constraint_type='PRIMARY KEY' AND tc.table_schema='public'\n), fk AS (\n  SELECT tc.table_name, kc.column_name, ccu.table_name AS ref_table, ccu.column_name AS ref_col, rc.delete_rule\n  FROM information_schema.table_constraints tc\n  JOIN information_schema.key_column_usage kc USING (constraint_name, table_schema)\n  JOIN information_schema.referential_constraints rc USING (constraint_name, table_schema)\n  JOIN information_schema.constraint_column_usage ccu USING (constraint_name, table_schema)\n  WHERE tc.constraint_type='FOREIGN KEY' AND tc.table_schema='public'\n)\nSELECT jsonb_pretty(jsonb_build_object(\n  'tables', jsonb_agg(DISTINCT jsonb_build_object(\n     'name', c.table_name,\n     'columns', (SELECT jsonb_agg(jsonb_build_object(\n          'name', c2.column_name,\n          'type', c2.data_type,\n          'nullable', (c2.is_nullable='YES'),\n          'primary', EXISTS (SELECT 1 FROM pk WHERE pk.table_name=c2.table_name AND pk.column_name=c2.column_name),\n          'references', (SELECT jsonb_build_object('table', f.ref_table,'column', f.ref_col,'onDelete', f.delete_rule) FROM fk f WHERE f.table_name=c2.table_name AND f.column_name=c2.column_name)\n       ) ORDER BY c2.ordinal_position) FROM cols c2 WHERE c2.table_name=c.table_name)\n  ))\n)) FROM cols c;" > schema.json</pre
+          >
+          <p><strong>MySQL (INFORMATION_SCHEMA)</strong></p>
+          <pre>
+mysql -u user -p -D mydb -e "SELECT JSON_PRETTY(JSON_OBJECT(\n 'tables', JSON_ARRAYAGG(t.table_json)\n ))\n FROM (\n  SELECT JSON_OBJECT(\n    'name', TABLE_NAME,\n    'columns', (SELECT JSON_ARRAYAGG(JSON_OBJECT(\n        'name', COLUMN_NAME,\n        'type', COLUMN_TYPE,\n        'nullable', IF(IS_NULLABLE='YES', true,false),\n        'primary', COLUMN_KEY='PRI',\n        'references', (SELECT JSON_OBJECT('table', REFERENCED_TABLE_NAME,'column', REFERENCED_COLUMN_NAME)\n                       FROM information_schema.KEY_COLUMN_USAGE k\n                       WHERE k.TABLE_NAME=c.TABLE_NAME AND k.COLUMN_NAME=c.COLUMN_NAME AND k.REFERENCED_TABLE_NAME IS NOT NULL)\n      ) ORDER BY ORDINAL_POSITION)\n      FROM information_schema.COLUMNS c WHERE c.TABLE_SCHEMA=TABLE_SCHEMA AND c.TABLE_NAME=TABLE_NAME)\n  ) AS table_json\n  FROM information_schema.TABLES\n  WHERE TABLE_SCHEMA='mydb' AND TABLE_TYPE='BASE TABLE'\n ) t;" > schema.json</pre
+          >
+          <p><strong>SQLite</strong></p>
+          <pre>
+sqlite3 my.db ".schema" > ddl.sql
+# Then paste ddl.sql and click Parse SQL DDL OR use a script to build JSON.</pre
+          >
+          <p><strong>SQL Server</strong></p>
+          <pre>
+sqlcmd -d MyDb -Q "SET NOCOUNT ON; SELECT ... (build JSON via FOR JSON PATH)" -h -1 -W > schema.json</pre
+          >
+          <p>
+            <strong>Oracle</strong>: Query
+            <code class="inline">USER_TAB_COLUMNS</code>,
+            <code class="inline">USER_CONSTRAINTS</code>,
+            <code class="inline">USER_CONS_COLUMNS</code> and assemble JSON
+            similarly.
+          </p>
+        </details>
+        <details>
+          <summary>Export / Sharing</summary>
+          <ul
+            style="
+              margin: 4px 0 0;
+              padding-left: 20px;
+              font-size: 0.8rem;
+              line-height: 1.3;
+            "
+          >
+            <li>
+              <strong>Static HTML</strong>: Exports a self-contained file
+              (diagram rendered dynamically next open).
+            </li>
+            <li>
+              <strong>PDF</strong>: Uses browser print. The page has print
+              styles for compact output.
+            </li>
+            <li>Embed JSON inside version control for schema review diffs.</li>
+          </ul>
+        </details>
+      </section>
+    </main>
+    <footer class="no-print">
+      <div>Relational Data Dictionary Tool • Local-only processing • v1.0</div>
+      <div class="export-note">
+        Tip: After exporting HTML, attach schema.json alongside for diff
+        tracking.
+      </div>
+    </footer>
+    <script>
+      let schema = null;
+      let currentFilters = { types: new Set(), search: "", showOrphans: false };
+      let positions = {};
+      let svg,
+        zoomState = { k: 1, x: 0, y: 0 };
+
+      function setStatus(msg) {
+        document.getElementById("status").textContent = msg;
+      }
+      function insertSample() {
+        const sample = {
+          tables: [
+            {
+              name: "departments",
+              comment: "Department master",
+              columns: [
+                { name: "id", type: "int", primary: true, nullable: false },
+                {
+                  name: "name",
+                  type: "varchar(80)",
+                  nullable: false,
+                  unique: true,
+                },
+                { name: "created_at", type: "timestamp", nullable: false },
+              ],
+            },
+            {
+              name: "employees",
+              comment: "Employees",
+              columns: [
+                { name: "id", type: "int", primary: true, nullable: false },
+                {
+                  name: "dept_id",
+                  type: "int",
+                  nullable: false,
+                  references: {
+                    table: "departments",
+                    column: "id",
+                    onDelete: "CASCADE",
+                  },
+                },
+                { name: "name", type: "varchar(100)", nullable: false },
+                { name: "email", type: "varchar(255)", unique: true },
+                {
+                  name: "status",
+                  type: "enum('ACTIVE','LEFT')",
+                  nullable: false,
+                },
+              ],
+            },
+            {
+              name: "projects",
+              comment: "Projects",
+              columns: [
+                { name: "id", type: "int", primary: true, nullable: false },
+                { name: "code", type: "varchar(20)", unique: true },
+                { name: "name", type: "varchar(120)", nullable: false },
+              ],
+            },
+            {
+              name: "employee_projects",
+              comment: "Bridge table (M:N)",
+              columns: [
+                {
+                  name: "employee_id",
+                  type: "int",
+                  nullable: false,
+                  references: {
+                    table: "employees",
+                    column: "id",
+                    onDelete: "CASCADE",
+                  },
+                },
+                {
+                  name: "project_id",
+                  type: "int",
+                  nullable: false,
+                  references: {
+                    table: "projects",
+                    column: "id",
+                    onDelete: "CASCADE",
+                  },
+                },
+                { name: "joined_on", type: "date", nullable: false },
+              ],
+              indexes: [
+                {
+                  name: "pk_emp_proj",
+                  columns: ["employee_id", "project_id"],
+                  unique: true,
+                },
+              ],
+            },
+          ],
+          relationships: [
+            {
+              from: "employees.dept_id",
+              to: "departments.id",
+              type: "many-to-one",
+              onDelete: "CASCADE",
+            },
+            {
+              from: "employee_projects.employee_id",
+              to: "employees.id",
+              type: "many-to-one",
+              onDelete: "CASCADE",
+            },
+            {
+              from: "employee_projects.project_id",
+              to: "projects.id",
+              type: "many-to-one",
+              onDelete: "CASCADE",
+            },
+          ],
+        };
+        schemaInput.value = JSON.stringify(sample, null, 2);
+        setStatus("Sample inserted");
+      }
+      function loadFile() {
+        const f = document.getElementById("fileInput").files[0];
+        if (!f) {
+          alert("Choose a file first");
+          return;
+        }
+        const r = new FileReader();
+        r.onload = (e) => {
+          schemaInput.value = e.target.result;
+          setStatus("File loaded: " + f.name);
+        };
+        r.readAsText(f);
+      }
+      function formatJson() {
+        try {
+          const obj = JSON.parse(schemaInput.value);
+          schemaInput.value = JSON.stringify(obj, null, 2);
+          setStatus("Formatted JSON");
+        } catch (err) {
+          setStatus("Not valid JSON");
+        }
+      }
+      function parseXML(str) {
+        try {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(str, "application/xml");
+          if (doc.querySelector("parsererror"))
+            throw new Error("XML parse error");
+          const tables = [];
+          doc.querySelectorAll("table").forEach((t) => {
+            const table = {
+              name: t.getAttribute("name"),
+              comment: t.getAttribute("comment") || "",
+              columns: [],
+            };
+            t.querySelectorAll("column").forEach((c) => {
+              const col = {
+                name: c.getAttribute("name"),
+                type: c.getAttribute("type") || "text",
+                nullable: c.getAttribute("nullable") !== "false",
+                primary: c.getAttribute("primary") === "true",
+                unique: c.getAttribute("unique") === "true",
+              };
+              const ref = c.getAttribute("references");
+              if (ref) {
+                const [rt, rc] = ref.split(".");
+                col.references = {
+                  table: rt,
+                  column: rc || "id",
+                  onDelete: c.getAttribute("onDelete") || undefined,
+                };
+              }
+              table.columns.push(col);
+            });
+            tables.push(table);
+          });
+          return { tables };
+        } catch (e) {
+          throw e;
+        }
+      }
+      function parseDDL() {
+        const txt = schemaInput.value;
+        const tableBlocks = [
+          ...txt.matchAll(
+            /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([`"\[]?)([A-Za-z0-9_]+)\1\s*\(([^;]+?)\);/gims
+          ),
+        ];
+        if (!tableBlocks.length) {
+          setStatus("No CREATE TABLE statements found");
+          return;
+        }
+        const tables = [];
+        tableBlocks.forEach((m) => {
+          const name = m[2];
+          const body = m[3];
+          const lines = body
+            .split(/,(?![^()]*\))/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const cols = [];
+          const fkRegex =
+            /FOREIGN\s+KEY\s*\(([^)]+)\)\s*REFERENCES\s+([A-Za-z0-9_]+)\s*\(([^)]+)\)/i;
+          let pkCols = [];
+          lines.forEach((line) => {
+            if (/^PRIMARY\s+KEY/i.test(line)) {
+              pkCols = line
+                .match(/\(([^)]+)\)/)[1]
+                .split(",")
+                .map((s) => s.replace(/[`\"\[\]]/g, "").trim());
+              return;
+            }
+            if (/^FOREIGN\s+KEY/i.test(line)) {
+              const fm = fkRegex.exec(line);
+              if (fm) {
+                /* handled via column annotate if matches single col */
+              }
+              return;
+            }
+            const colMatch = line.match(
+              /^([`"\[]?)([A-Za-z0-9_]+)\1\s+([^\s,]+)(.*)$/
+            );
+            if (colMatch) {
+              const colName = colMatch[2];
+              const type = colMatch[3];
+              const rest = colMatch[4];
+              const col = {
+                name: colName,
+                type,
+                nullable: !/NOT\s+NULL/i.test(rest),
+              };
+              if (/UNIQUE/i.test(rest)) col.unique = true;
+              const ref = rest.match(
+                /REFERENCES\s+([A-Za-z0-9_]+)\s*\(([^)]+)\)(?:\s+ON\s+DELETE\s+(CASCADE|SET\s+NULL|RESTRICT))?/i
+              );
+              if (ref) {
+                col.references = {
+                  table: ref[1],
+                  column: ref[2].split(",")[0].trim(),
+                  onDelete: ref[3] || undefined,
+                };
+              }
+              cols.push(col);
+            }
+          });
+          cols.forEach((c) => {
+            if (pkCols.includes(c.name)) c.primary = true;
+          });
+          tables.push({ name, columns: cols });
+        });
+        schemaInput.value = JSON.stringify({ tables }, null, 2);
+        setStatus("DDL parsed to JSON (review & Generate)");
+      }
+      function inferRelationships(s) {
+        const rel = [];
+        (s.tables || []).forEach((t) => {
+          (t.columns || []).forEach((c) => {
+            if (c.references) {
+              rel.push({
+                from: `${t.name}.${c.name}`,
+                to: `${c.references.table}.${c.references.column || "id"}`,
+                type: "many-to-one",
+                onDelete: c.references.onDelete,
+              });
+            }
+          });
+        });
+        return rel;
+      }
+      function generate() {
+        const raw = schemaInput.value.trim();
+        if (!raw) {
+          alert("Provide input first");
+          return;
+        }
+        try {
+          let obj;
+          if (raw.startsWith("<")) obj = parseXML(raw);
+          else obj = JSON.parse(raw);
+          if (!obj.relationships) obj.relationships = inferRelationships(obj);
+          schema = obj;
+          setStatus("Parsed OK. Rendering...");
+          document.getElementById("summaryPanel").style.display = "block";
+          document.getElementById("diagramPanel").style.display = "block";
+          renderMetrics();
+          buildTypeFilters();
+          renderTables();
+          buildDiagram();
+          window.scrollTo({
+            top: document.getElementById("summaryPanel").offsetTop - 10,
+            behavior: "smooth",
+          });
+        } catch (e) {
+          console.error(e);
+          setStatus("Parse error: " + e.message);
+        }
+      }
+      function renderMetrics() {
+        const tables = schema.tables || [];
+        const rel = schema.relationships || [];
+        const colCount = tables.reduce(
+          (a, t) => a + (t.columns ? t.columns.length : 0),
+          0
+        );
+        const pk = tables.reduce(
+          (a, t) => a + t.columns.filter((c) => c.primary).length,
+          0
+        );
+        const fk = rel.length;
+        document.getElementById(
+          "metrics"
+        ).innerHTML = `<div class=metric><b>${tables.length}</b>TABLES</div><div class=metric><b>${colCount}</b>COLUMNS</div><div class=metric><b>${pk}</b>PRIMARY KEYS</div><div class=metric><b>${fk}</b>RELATIONSHIPS</div>`;
+      }
+      function collectTypes() {
+        const set = new Set();
+        (schema.tables || []).forEach((t) =>
+          t.columns.forEach((c) => set.add(c.type.toLowerCase()))
+        );
+        return [...set].sort();
+      }
+      function buildTypeFilters() {
+        const holder = document.getElementById("typeFilters");
+        holder.innerHTML = "";
+        collectTypes()
+          .slice(0, 24)
+          .forEach((tp) => {
+            const div = document.createElement("div");
+            div.className = "pill";
+            div.textContent = tp;
+            div.onclick = () => {
+              if (currentFilters.types.has(tp)) currentFilters.types.delete(tp);
+              else currentFilters.types.add(tp);
+              div.classList.toggle("active");
+              renderTables();
+            };
+            holder.appendChild(div);
+          });
+      }
+      function resetFilters() {
+        currentFilters.types.clear();
+        currentFilters.search = "";
+        currentFilters.showOrphans = false;
+        document.getElementById("searchBox").value = "";
+        document
+          .querySelectorAll(".pill")
+          .forEach((p) => p.classList.remove("active"));
+        renderTables();
+      }
+      function highlightOrphans() {
+        currentFilters.showOrphans = true;
+        renderTables();
+        currentFilters.showOrphans = false;
+      }
+      function tableIsOrphan(t) {
+        const name = t.name;
+        const rel = schema.relationships || [];
+        const involved = rel.some(
+          (r) => r.from.split(".")[0] === name || r.to.split(".")[0] === name
+        );
+        return !involved;
+      }
+      function renderTables() {
+        const search = (
+          document.getElementById("searchBox").value || ""
+        ).toLowerCase();
+        const list = document.getElementById("tableList");
+        list.innerHTML = "";
+        (schema.tables || []).forEach((t) => {
+          if (currentFilters.types.size) {
+            const has = t.columns.some((c) =>
+              currentFilters.types.has(c.type.toLowerCase())
+            );
+            if (!has) return;
+          }
+          if (search) {
+            const combined = (
+              t.name +
+              " " +
+              (t.comment || "") +
+              " " +
+              t.columns.map((c) => c.name + " " + (c.comment || "")).join(" ")
+            ).toLowerCase();
+            if (!combined.includes(search)) return;
+          }
+          if (currentFilters.showOrphans && !tableIsOrphan(t)) return;
+          const div = document.createElement("div");
+          div.style.margin = "0 0 34px";
+          div.innerHTML = `<h3 style="margin:0 0 6px; font-size:1rem; display:flex; gap:8px; align-items:center">${
+            t.name
+          } ${
+            t.comment
+              ? `<span class="small" style="font-weight:400; color:var(--muted)">– ${escapeHtml(
+                  t.comment
+                )}</span>`
+              : ""
+          } ${
+            currentFilters.showOrphans && tableIsOrphan(t)
+              ? '<span class="badge" style="background:#444">ORPHAN</span>'
+              : ""
+          }</h3>`;
+          const tableElm = document.createElement("table");
+          const head = `<thead><tr><th>#</th><th>Column</th><th>Type</th><th>Null</th><th>PK</th><th>FK</th><th>Unique</th><th>Comment</th></tr></thead>`;
+          let body = "<tbody>";
+          t.columns.forEach((c, i) => {
+            body += `<tr><td style="opacity:.6">${i + 1}</td><td>${
+              c.name
+            }</td><td>${escapeHtml(c.type)}</td><td>${
+              c.nullable
+                ? "<span style=color:#888>YES</span>"
+                : "<span class=badge nn>NO</span>"
+            }</td><td>${
+              c.primary ? "<span class=badge pk>PK</span>" : ""
+            }</td><td>${
+              c.references
+                ? `<span class=badge fk title="${c.references.table}.${
+                    c.references.column
+                  }${
+                    c.references.onDelete
+                      ? " ON DELETE " + c.references.onDelete
+                      : ""
+                  }">FK</span>`
+                : ""
+            }</td><td>${
+              c.unique ? "<span class=badge dark>UQ</span>" : ""
+            }</td><td>${c.comment ? escapeHtml(c.comment) : ""}</td></tr>`;
+          });
+          body += "</tbody>";
+          tableElm.innerHTML = head + body;
+          div.appendChild(tableElm);
+          if (t.indexes) {
+            const idx = document.createElement("div");
+            idx.style.fontSize = ".65rem";
+            idx.style.marginTop = "4px";
+            idx.style.letterSpacing = ".5px";
+            idx.style.opacity = 0.85;
+            idx.innerHTML =
+              "<strong>Indexes:</strong> " +
+              t.indexes
+                .map(
+                  (ix) =>
+                    `<code class=inline>${ix.unique ? "UNIQUE " : ""}${
+                      ix.name
+                    }(${(ix.columns || []).join(",")})</code>`
+                )
+                .join(" ");
+            div.appendChild(idx);
+          }
+          list.appendChild(div);
+        });
+      }
+      function escapeHtml(s) {
+        return (s || "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[c])
+        );
+      }
+      function buildDiagram() {
+        svg = document.getElementById("diagram");
+        svg.innerHTML = "";
+        const defs = `<defs><linearGradient id="nodeGradient" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#1c2b38"/><stop offset="100%" stop-color="#111c25"/></linearGradient><marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M0,0 L12,6 L0,12 3,6 z" fill="#4dc3ff" opacity=".95"/></marker></defs>`;
+        svg.insertAdjacentHTML("afterbegin", defs);
+        const tables = schema.tables || [];
+        const rel = schema.relationships || [];
+        const W = svg.clientWidth || svg.parentElement.clientWidth;
+        const H = svg.clientHeight || svg.parentElement.clientHeight;
+        const R = Math.min(W, H) / 2 - 120;
+        const centerX = W / 2,
+          centerY = H / 2;
+        positions = {};
+        tables.forEach((t, i) => {
+          const angle = (i / tables.length) * Math.PI * 2;
+          const x = centerX + Math.cos(angle) * R;
+          const y = centerY + Math.sin(angle) * R;
+          positions[t.name] = { x, y };
+        }); // Adjust if few tables
+        if (tables.length <= 3) {
+          tables.forEach((t, i) => {
+            positions[t.name] = {
+              x: centerX + (i - (tables.length - 1) / 2) * 260,
+              y: centerY,
+            };
+          });
+        }
+        // Determine M:N by bridge tables (only FKs and composite unique index referencing 2+ tables)
+        const bridgeCandidates = new Set();
+        tables.forEach((t) => {
+          const fkCols = t.columns.filter((c) => c.references);
+          if (
+            (fkCols.length >= 2 && fkCols.length === t.columns.length) ||
+            (t.indexes || []).some(
+              (ix) => ix.unique && ix.columns && ix.columns.length >= 2
+            )
+          )
+            bridgeCandidates.add(t.name);
+        });
+        // Draw edges first
+        rel.forEach((r) => {
+          const fromTable = r.from.split(".")[0];
+          const toTable = r.to.split(".")[0];
+          if (!positions[fromTable] || !positions[toTable]) return;
+          const p1 = positions[fromTable];
+          const p2 = positions[toTable];
+          const dx = p2.x - p1.x,
+            dy = p2.y - p1.y;
+          const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+          const ux = dx / dist,
+            uy = dy / dist;
+          const startX = p1.x + ux * 70;
+          const startY = p1.y + uy * 40;
+          const endX = p2.x - ux * 70;
+          const endY = p2.y - uy * 40;
+          const isBridge =
+            bridgeCandidates.has(fromTable) || bridgeCandidates.has(toTable);
+          const cascade = (r.onDelete || "").toUpperCase() === "CASCADE";
+          const cls =
+            "edge" +
+            (isBridge ? " m2m" : "") +
+            (cascade ? " on-delete-cascade" : "");
+          const path = `<line class="${cls}" data-from="${fromTable}" data-to="${toTable}" x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" />`;
+          svg.insertAdjacentHTML("beforeend", path);
+        });
+        // Draw nodes
+        tables.forEach((t) => {
+          const { x, y } = positions[t.name];
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.classList.add("node");
+          g.setAttribute("data-table", t.name);
+          g.setAttribute("transform", `translate(${x - 70},${y - 40})`);
+          const cols = t.columns
+            .slice(0, 6)
+            .map(
+              (c) =>
+                `${c.primary ? "*" : ""}${c.name}${c.references ? " →" : ""}`
+            )
+            .join("\n");
+          const more =
+            t.columns.length > 6 ? `\n... +${t.columns.length - 6}` : "";
+          const rect = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "rect"
+          );
+          rect.setAttribute("width", "140");
+          rect.setAttribute("height", "80");
+          const title = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+          );
+          title.setAttribute("x", "8");
+          title.setAttribute("y", "16");
+          title.setAttribute("font-size", "11");
+          title.setAttribute("font-weight", "600");
+          title.textContent = t.name;
+          const text = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "text"
+          );
+          text.setAttribute("x", "8");
+          text.setAttribute("y", "28");
+          text.setAttribute("font-size", "8");
+          text.setAttribute("fill", "#9ca3af");
+          text.setAttribute("style", "white-space:pre-line;");
+          text.textContent = cols + more;
+          g.appendChild(rect);
+          g.appendChild(title);
+          g.appendChild(text);
+          g.addEventListener("click", () => selectNode(t.name));
+          g.addEventListener("dblclick", () => focusNode(t.name));
+          svg.appendChild(g);
+        });
+        fitDiagram();
+      }
+      function selectNode(name) {
+        document
+          .querySelectorAll(".node")
+          .forEach((n) => n.classList.remove("selected"));
+        const node = document.querySelector(`.node[data-table="${name}"]`);
+        if (!node) return;
+        node.classList.add("selected");
+        const involved = new Set([name]);
+        (schema.relationships || []).forEach((r) => {
+          const a = r.from.split(".")[0];
+          const b = r.to.split(".")[0];
+          if (a === name) involved.add(b);
+          if (b === name) involved.add(a);
+        });
+        document.querySelectorAll(".edge").forEach((e) => {
+          const f = e.getAttribute("data-from");
+          const t = e.getAttribute("data-to");
+          const active = involved.has(f) && involved.has(t);
+          e.style.opacity = active ? "1" : "0.12";
+        });
+        document.querySelectorAll(".node").forEach((n) => {
+          const tbl = n.getAttribute("data-table");
+          n.style.opacity = involved.has(tbl) ? "1" : "0.18";
+        });
+      }
+      function focusNode(name) {
+        selectNode(name);
+        const p = positions[name];
+        if (!p) return;
+        const wrapper = document.getElementById("diagramWrapper");
+        const W = wrapper.clientWidth;
+        const H = wrapper.clientHeight;
+        zoomState.k = 1.6;
+        zoomState.x = W / 2 - p.x * zoomState.k;
+        zoomState.y = H / 2 - p.y * zoomState.k;
+        applyTransform();
+      }
+      function fitDiagram() {
+        zoomState = { k: 1, x: 0, y: 0 };
+        applyTransform();
+        document
+          .querySelectorAll(".edge,.node")
+          .forEach((el) => (el.style.opacity = "1"));
+        document
+          .querySelectorAll(".node")
+          .forEach((n) => n.classList.remove("selected"));
+      }
+      function applyTransform() {
+        svg.style.transform = `translate(${zoomState.x}px,${zoomState.y}px) scale(${zoomState.k})`;
+        svg.style.transformOrigin = "0 0";
+      }
+      (function enablePanZoom() {
+        const wrapper = document.getElementById("diagramWrapper");
+        let dragging = false,
+          lastX = 0,
+          lastY = 0;
+        wrapper.addEventListener("mousedown", (e) => {
+          if (e.target.closest(".node")) return;
+          dragging = true;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          wrapper.style.cursor = "grabbing";
+        });
+        window.addEventListener("mousemove", (e) => {
+          if (!dragging) return;
+          zoomState.x += e.clientX - lastX;
+          zoomState.y += e.clientY - lastY;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          applyTransform();
+        });
+        window.addEventListener("mouseup", () => {
+          dragging = false;
+          wrapper.style.cursor = "default";
+        });
+        wrapper.addEventListener(
+          "wheel",
+          (e) => {
+            e.preventDefault();
+            const delta = -e.deltaY * 0.001;
+            const kNew = Math.min(3, Math.max(0.4, zoomState.k * (1 + delta)));
+            const rect = wrapper.getBoundingClientRect();
+            const cx = (e.clientX - rect.left - zoomState.x) / zoomState.k;
+            const cy = (e.clientY - rect.top - zoomState.y) / zoomState.k;
+            zoomState.x -= cx * (kNew - zoomState.k);
+            zoomState.y -= cy * (kNew - zoomState.k);
+            zoomState.k = kNew;
+            applyTransform();
+          },
+          { passive: false }
+        );
+      })();
+      function exportHTML() {
+        if (!schema) {
+          alert("Generate first");
+          return;
+        }
+        const html = `<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Data Dictionary Export</title><style>body{font-family:ui-monospace,Consolas,monospace;padding:30px;max-width:1100px;margin:0 auto;line-height:1.45;}h1{font-size:1.6rem;margin:0 0 10px;}h2{margin:36px 0 12px;font-size:1.1rem;}table{border-collapse:collapse;width:100%;font-size:.72rem;margin:0 0 26px;}th,td{border:1px solid #999;padding:4px 6px;text-align:left;vertical-align:top;}th{background:#eee;}code{background:#eee;padding:2px 4px;border-radius:4px;}footer{margin-top:70px;font-size:.6rem;color:#555;}svg{max-width:100%;height:auto;} .badge{display:inline-block;padding:2px 6px;border-radius:8px;background:#222;color:#fff;font-size:.6rem;margin-right:4px;} .pk{background:#198754;} .fk{background:#ffc107;color:#222;} .nn{background:#dc3545;} </style></head><body><h1>Data Dictionary Export</h1><p>Generated ${new Date().toISOString()}</p><h2>Schema (JSON)</h2><pre>${escapeHtml(
+          JSON.stringify(schema, null, 2)
+        )}</pre><h2>Tables</h2>${schema.tables
+          .map((t) => {
+            const rows = t.columns
+              .map(
+                (c, i) =>
+                  `<tr><td>${i + 1}</td><td>${c.name}</td><td>${
+                    c.type
+                  }</td><td>${c.nullable}</td><td>${c.primary || ""}</td><td>${
+                    c.references
+                      ? c.references.table + "." + c.references.column
+                      : ""
+                  }</td><td>${c.unique || ""}</td><td>${
+                    c.comment || ""
+                  }</td></tr>`
+              )
+              .join("");
+            return `<h3 style='margin:22px 0 4px'>${t.name} ${
+              t.comment ? "- " + escapeHtml(t.comment) : ""
+            }</h3><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Null</th><th>PK</th><th>FK</th><th>Unique</th><th>Comment</th></tr></thead><tbody>${rows}</tbody></table>`;
+          })
+          .join(
+            ""
+          )}<h2>Relationships</h2><table><thead><tr><th>#</th><th>From</th><th>To</th><th>Type</th><th>On Delete</th></tr></thead><tbody>${(
+          schema.relationships || []
+        )
+          .map(
+            (r, i) =>
+              `<tr><td>${i + 1}</td><td>${r.from}</td><td>${r.to}</td><td>${
+                r.type || ""
+              }</td><td>${r.onDelete || ""}</td></tr>`
+          )
+          .join(
+            ""
+          )}</tbody></table><footer>Static export. Diagram not embedded (re-generate in interactive tool).</footer></body></html>`;
+        const blob = new Blob([html], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "data_dictionary_export.html";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      // Expose for console
+      window.fitDiagram = fitDiagram;
+    </script>
+  </body>
+</html>
