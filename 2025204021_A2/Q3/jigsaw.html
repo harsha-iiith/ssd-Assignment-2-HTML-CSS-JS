@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jigsaw Puzzle Maker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e8f4f8;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .upload-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #bdc3c7;
+        }
+        .difficulty-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f1c40f;
+            border-radius: 10px;
+        }
+        .difficulty-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .difficulty-section label {
+            margin: 0 15px;
+            font-weight: bold;
+        }
+        .puzzle-area {
+            position: relative;
+            margin: 30px auto;
+            border: 3px solid #34495e;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+        .piece {
+            position: absolute;
+            border: 1px solid #95a5a6;
+            cursor: grab;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+        .piece:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+        .piece.correct {
+            border: 2px solid #27ae60;
+            box-shadow: 0 0 5px #27ae60;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 10px 5px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .preview {
+            margin-top: 20px;
+            max-width: 200px;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+        }
+        .instructions {
+            margin-top: 20px;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        .status {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .status.complete {
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧩 Jigsaw Puzzle Maker</h1>
+        <p class="subtitle">Create and solve your own custom puzzles!</p>
+        
+        <div class="upload-section">
+            <input type="file" id="imageUpload" accept="image/*" style="margin-bottom: 10px;">
+            <br>
+            <button onclick="loadImage()">Load Image</button>
+            <div id="previewContainer" style="display: none;">
+                <img id="imagePreview" class="preview" alt="Preview">
+            </div>
+        </div>
+        
+        <div class="difficulty-section">
+            <h3>Select Difficulty:</h3>
+            <label><input type="radio" name="difficulty" value="4" checked> 4 pieces (2x2)</label>
+            <label><input type="radio" name="difficulty" value="9"> 9 pieces (3x3)</label>
+            <label><input type="radio" name="difficulty" value="16"> 16 pieces (4x4)</label>
+            <label><input type="radio" name="difficulty" value="25"> 25 pieces (5x5)</label>
+            <label><input type="radio" name="difficulty" value="36"> 36 pieces (6x6)</label>
+        </div>
+        
+        <button onclick="createPuzzle()" id="createBtn">Create Puzzle</button>
+        <button onclick="resetPuzzle()">Reset</button>
+        <button onclick="shufflePieces()">Shuffle</button>
+        
+        <div class="puzzle-area" id="puzzleArea"></div>
+        
+        <div class="status" id="status">Load an image and create a puzzle to start!</div>
+        
+        <div class="instructions">
+            <p>Drag and drop the pieces to their correct positions. Pieces will snap into place when close enough!</p>
+        </div>
+    </div>
+
+    <script>
+        let image = null;
+        let pieces = [];
+        let pieceSize = 100;
+        let gridCols = 0;
+        let gridRows = 0;
+        let canvas = null;
+        let ctx = null;
+
+        function loadImage() {
+            const fileInput = document.getElementById('imageUpload');
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    image = new Image();
+                    image.onload = function() {
+                        // Show preview
+                        document.getElementById('imagePreview').src = image.src;
+                        document.getElementById('previewContainer').style.display = 'block';
+                        document.getElementById('status').textContent = 'Image loaded! Select difficulty and create puzzle.';
+                    };
+                    image.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function createPuzzle() {
+            if (!image) {
+                alert('Please load an image first!');
+                return;
+            }
+            
+            const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+            const numPieces = parseInt(difficulty);
+            
+            // Calculate grid size (square grid for simplicity)
+            gridCols = Math.sqrt(numPieces);
+            gridRows = Math.sqrt(numPieces);
+            
+            if (gridCols % 1 !== 0) {
+                alert('Invalid difficulty level!');
+                return;
+            }
+            
+            pieceSize = 400 / gridCols;
+            
+            const puzzleArea = document.getElementById('puzzleArea');
+            puzzleArea.innerHTML = '';
+            puzzleArea.style.width = (gridCols * pieceSize) + 'px';
+            puzzleArea.style.height = (gridRows * pieceSize) + 'px';
+            
+            // Create canvas for slicing
+            canvas = document.createElement('canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0);
+            
+            pieces = [];
+            
+            for (let row = 0; row < gridRows; row++) {
+                for (let col = 0; col < gridCols; col++) {
+                    const pieceCanvas = document.createElement('canvas');
+                    pieceCanvas.width = pieceSize;
+                    pieceCanvas.height = pieceSize;
+                    const pieceCtx = pieceCanvas.getContext('2d');
+                    
+                    // Draw the corresponding part of the image
+                    pieceCtx.drawImage(
+                        canvas,
+                        col * (image.width / gridCols),
+                        row * (image.height / gridRows),
+                        image.width / gridCols,
+                        image.height / gridRows,
+                        0, 0, pieceSize, pieceSize
+                    );
+                    
+                    const piece = document.createElement('div');
+                    piece.className = 'piece';
+                    piece.style.width = pieceSize + 'px';
+                    piece.style.height = pieceSize + 'px';
+                    piece.style.backgroundImage = `url(${pieceCanvas.toDataURL()})`;
+                    piece.dataset.correctRow = row;
+                    piece.dataset.correctCol = col;
+                    
+                    // Random position within puzzle area
+                    piece.style.left = Math.random() * (400 - pieceSize) + 'px';
+                    piece.style.top = Math.random() * (400 - pieceSize) + 'px';
+                    
+                    piece.addEventListener('mousedown', startDrag);
+                    pieces.push(piece);
+                    puzzleArea.appendChild(piece);
+                }
+            }
+            
+            document.getElementById('status').textContent = 'Puzzle created! Drag pieces to complete.';
+            document.getElementById('createBtn').disabled = true;
+        }
+
+        function resetPuzzle() {
+            const puzzleArea = document.getElementById('puzzleArea');
+            puzzleArea.innerHTML = '';
+            pieces = [];
+            document.getElementById('status').textContent = 'Puzzle reset. Load an image and create a new puzzle.';
+            document.getElementById('createBtn').disabled = false;
+            document.getElementById('previewContainer').style.display = 'none';
+        }
+
+        function shufflePieces() {
+            pieces.forEach(piece => {
+                piece.style.left = Math.random() * (400 - pieceSize) + 'px';
+                piece.style.top = Math.random() * (400 - pieceSize) + 'px';
+                piece.classList.remove('correct');
+            });
+            document.getElementById('status').textContent = 'Pieces shuffled!';
+        }
+
+        let draggedPiece = null;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        function startDrag(e) {
+            draggedPiece = e.target;
+            offsetX = e.clientX - draggedPiece.offsetLeft;
+            offsetY = e.clientY - draggedPiece.offsetTop;
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', drop);
+        }
+
+        function drag(e) {
+            if (draggedPiece) {
+                draggedPiece.style.left = (e.clientX - offsetX) + 'px';
+                draggedPiece.style.top = (e.clientY - offsetY) + 'px';
+            }
+        }
+
+        function drop(e) {
+            if (draggedPiece) {
+                // Check if piece is close to correct position
+                const correctLeft = parseInt(draggedPiece.dataset.correctCol) * pieceSize;
+                const correctTop = parseInt(draggedPiece.dataset.correctRow) * pieceSize;
+                const currentLeft = parseInt(draggedPiece.style.left);
+                const currentTop = parseInt(draggedPiece.style.top);
+                
+                if (Math.abs(currentLeft - correctLeft) < 30 && Math.abs(currentTop - correctTop) < 30) {
+                    draggedPiece.style.left = correctLeft + 'px';
+                    draggedPiece.style.top = correctTop + 'px';
+                    draggedPiece.classList.add('correct');
+                }
+                
+                // Check if puzzle is complete
+                checkCompletion();
+            }
+            draggedPiece = null;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', drop);
+        }
+
+        function checkCompletion() {
+            const correctPieces = pieces.filter(piece => piece.classList.contains('correct'));
+            if (correctPieces.length === pieces.length) {
+                document.getElementById('status').textContent = '🎉 Congratulations! Puzzle completed!';
+                document.getElementById('status').classList.add('complete');
+            }
+        }
+    </script>
+</body>
+</html>
