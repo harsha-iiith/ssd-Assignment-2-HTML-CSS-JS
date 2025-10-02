@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q6 - Event Tracking System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .split-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-size: 18px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .demo-section {
+            margin-bottom: 20px;
+        }
+
+        .demo-section h3 {
+            color: #475569;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        button, .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .checkbox-group,
+        .radio-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        input[type="checkbox"],
+        input[type="radio"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .image-item {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .image-item:hover {
+            transform: scale(1.05);
+        }
+
+        a {
+            color: #2563eb;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        .link-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .link-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .link-list li:last-child {
+            border-bottom: none;
+        }
+
+        #eventLog {
+            height: 600px;
+            overflow-y: auto;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-left: 3px solid #475569;
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        .log-entry.click {
+            border-left-color: #2563eb;
+        }
+
+        .log-entry.view {
+            border-left-color: #16a34a;
+        }
+
+        .log-entry.focus {
+            border-left-color: #f59e0b;
+        }
+
+        .log-entry.change {
+            border-left-color: #a855f7;
+        }
+
+        .timestamp {
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .event-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin: 0 8px;
+        }
+
+        .event-type.click {
+            background: #2563eb;
+            color: white;
+        }
+
+        .event-type.view {
+            background: #16a34a;
+            color: white;
+        }
+
+        .event-type.focus {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .event-type.change {
+            background: #a855f7;
+            color: white;
+        }
+
+        .event-object {
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: #334155;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        p {
+            margin-bottom: 12px;
+            color: #475569;
+        }
+
+        .dropdown-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: white;
+            min-width: 160px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            z-index: 1;
+            margin-top: 4px;
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 12px 16px;
+            color: #475569;
+        }
+
+        .dropdown-content a:hover {
+            background: #f1f5f9;
+        }
+
+        .dropdown-menu:hover .dropdown-content {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Q6 - Event Tracking System</h1>
+            <p class="subtitle">Comprehensive click and page view tracking for all interactive elements</p>
+        </header>
+
+        <div class="split-layout">
+            <div>
+                <div class="panel">
+                    <h2>Interactive Elements Demo</h2>
+
+                    <div class="demo-section">
+                        <h3>Buttons</h3>
+                        <div class="button-group">
+                            <button class="btn-primary">Primary Button</button>
+                            <button class="btn-success">Success Button</button>
+                            <button class="btn-warning">Warning Button</button>
+                            <button class="btn-danger">Danger Button</button>
+                        </div>
+                    </div>
+
+                    <div class="demo-section">
+                        <h3>Form Inputs</h3>
+                        <label>Text Input</label>
+                        <input type="text" placeholder="Type something...">
+                        
+                        <label>Email Input</label>
+                        <input type="email" placeholder="your@email.com">
+                        
+                        <label>Dropdown</label>
+                        <select>
+                            <option>Select an option</option>
+                            <option>Option 1</option>
+                            <option>Option 2</option>
+                            <option>Option 3</option>
+                        </select>
+
+                        <label>Textarea</label>
+                        <textarea rows="3" placeholder="Enter text here..."></textarea>
+                    </div>
+
+                    <div class="demo-section">
+                        <h3>Checkboxes</h3>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox"> Option A</label>
+                            <label><input type="checkbox"> Option B</label>
+                            <label><input type="checkbox"> Option C</label>
+                        </div>
+                    </div>
+
+                    <div class="demo-section">
+                        <h3>Radio Buttons</h3>
+                        <div class="radio-group">
+                            <label><input type="radio" name="radio"> Choice 1</label>
+                            <label><input type="radio" name="radio"> Choice 2</label>
+                            <label><input type="radio" name="radio"> Choice 3</label>
+                        </div>
+                    </div>
+
+                    <div class="demo-section">
+                        <h3>Dropdown Menu</h3>
+                        <div class="dropdown-menu">
+                            <button class="btn-primary">Hover Menu</button>
+                            <div class="dropdown-content">
+                                <a href="#">Menu Item 1</a>
+                                <a href="#">Menu Item 2</a>
+                                <a href="#">Menu Item 3</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Images & Media</h2>
+                    <div class="image-grid">
+                        <div class="image-item"></div>
+                        <div class="image-item"></div>
+                        <div class="image-item"></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Links & Navigation</h2>
+                    <ul class="link-list">
+                        <li><a href="#">Link to Q1 - Resume</a></li>
+                        <li><a href="#">Link to Q2 - News Portal</a></li>
+                        <li><a href="#">Link to Q3 - Jigsaw Puzzle</a></li>
+                        <li><a href="#">Link to Q4 - Stoplight Game</a></li>
+                        <li><a href="#">Link to Q5 - Data Dictionary</a></li>
+                    </ul>
+                </div>
+
+                <div class="panel">
+                    <h2>Text Content</h2>
+                    <p>This is a paragraph of text that users can click and select. It demonstrates text interaction tracking.</p>
+                    <p>Event tracking captures all user interactions including clicks on text elements, which helps understand user engagement patterns.</p>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel">
+                    <h2>Event Log Console</h2>
+                    
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="clickCount">0</div>
+                            <div class="stat-label">Clicks</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="viewCount">1</div>
+                            <div class="stat-label">Views</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="focusCount">0</div>
+                            <div class="stat-label">Focus</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="changeCount">0</div>
+                            <div class="stat-label">Changes</div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn-primary" onclick="clearLog()">Clear Log</button>
+                        <button class="btn-success" onclick="exportLog()">Export Log</button>
+                    </div>
+
+                    <div id="eventLog"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let eventCount = {
+            click: 0,
+            view: 1,
+            focus: 0,
+            change: 0
+        };
+
+        function getEventObject(element) {
+            if (!element || element === document) return 'document';
+            
+            const tagName = element.tagName.toLowerCase();
+            const type = element.type;
+            const role = element.getAttribute('role');
+            const classList = element.className;
+
+            if (tagName === 'button') {
+                if (classList.includes('btn-primary')) return 'button-primary';
+                if (classList.includes('btn-success')) return 'button-success';
+                if (classList.includes('btn-warning')) return 'button-warning';
+                if (classList.includes('btn-danger')) return 'button-danger';
+                return 'button';
+            }
+
+            if (tagName === 'a') return 'link';
+            
+            if (tagName === 'input') {
+                if (type === 'checkbox') return 'checkbox';
+                if (type === 'radio') return 'radio';
+                if (type === 'text') return 'text-input';
+                if (type === 'email') return 'email-input';
+                if (type === 'number') return 'number-input';
+                return 'input';
+            }
+
+            if (tagName === 'select') return 'dropdown';
+            if (tagName === 'textarea') return 'textarea';
+            if (tagName === 'img') return 'image';
+            if (tagName === 'p') return 'text';
+            if (tagName === 'h1' || tagName === 'h2' || tagName === 'h3') return 'heading';
+            if (tagName === 'div' && classList.includes('image-item')) return 'image';
+            if (tagName === 'div' && classList.includes('dropdown-content')) return 'dropdown-menu';
+            if (tagName === 'label') return 'label';
+            
+            return tagName;
+        }
+
+        function formatTimestamp() {
+            const now = new Date();
+            return now.toISOString().replace('T', ' ').substring(0, 23);
+        }
+
+        function logEvent(eventType, eventObject) {
+            const timestamp = formatTimestamp();
+            const logMessage = `${timestamp} | ${eventType} | ${eventObject}`;
+            
+            console.log(logMessage);
+
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${eventType}`;
+            logEntry.innerHTML = `
+                <span class="timestamp">${timestamp}</span>
+                <span class="event-type ${eventType}">${eventType}</span>
+                <span class="event-object">${eventObject}</span>
+            `;
+
+            const eventLog = document.getElementById('eventLog');
+            eventLog.insertBefore(logEntry, eventLog.firstChild);
+
+            eventCount[eventType]++;
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('clickCount').textContent = eventCount.click;
+            document.getElementById('viewCount').textContent = eventCount.view;
+            document.getElementById('focusCount').textContent = eventCount.focus;
+            document.getElementById('changeCount').textContent = eventCount.change;
+        }
+
+        function clearLog() {
+            document.getElementById('eventLog').innerHTML = '';
+        }
+
+        function exportLog() {
+            const logEntries = document.querySelectorAll('.log-entry');
+            let exportText = 'Event Tracking Log\n';
+            exportText += '='.repeat(50) + '\n\n';
+            
+            logEntries.forEach(entry => {
+                exportText += entry.textContent.trim() + '\n';
+            });
+
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `event_log_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener('click', function(event) {
+            const eventObject = getEventObject(event.target);
+            logEvent('click', eventObject);
+        });
+
+        document.addEventListener('focus', function(event) {
+            if (event.target.tagName === 'INPUT' || 
+                event.target.tagName === 'TEXTAREA' || 
+                event.target.tagName === 'SELECT') {
+                const eventObject = getEventObject(event.target);
+                logEvent('focus', eventObject);
+            }
+        }, true);
+
+        document.addEventListener('change', function(event) {
+            if (event.target.tagName === 'INPUT' || 
+                event.target.tagName === 'TEXTAREA' || 
+                event.target.tagName === 'SELECT') {
+                const eventObject = getEventObject(event.target);
+                logEvent('change', eventObject);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            logEvent('view', 'page');
+        });
+
+        logEvent('view', 'page');
+    </script>
+</body>
+</html>
