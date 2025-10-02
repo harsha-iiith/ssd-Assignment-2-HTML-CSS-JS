@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q7 - Bowling Alley Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .ui-overlay > * {
+            pointer-events: auto;
+        }
+
+        .scoreboard {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.98);
+            padding: 20px 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            min-width: 850px;
+            backdrop-filter: blur(10px);
+        }
+
+        .scoreboard h2 {
+            text-align: center;
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .frames {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .frame {
+            background: #f8fafc;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 4px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .frame.active {
+            border-color: #2563eb;
+            background: #dbeafe;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .frame.strike {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .frame.spare {
+            background: #dbeafe;
+            border-color: #3b82f6;
+        }
+
+        .frame-number {
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .throws {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .throw {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .frame-score {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 4px;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .total-score {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .total-score strong {
+            font-size: 24px;
+            color: #1e293b;
+            margin-left: 8px;
+        }
+
+        .stats-badges {
+            display: flex;
+            gap: 8px;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-strike {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-spare {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .power-control {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .power-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            text-align: center;
+        }
+
+        .power-slider {
+            width: 200px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #16a34a 0%, #f59e0b 50%, #dc2626 100%);
+            outline: none;
+            border-radius: 5px;
+        }
+
+        .power-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid #2563eb;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .power-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid #2563eb;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .power-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: center;
+        }
+
+        .spin-control {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .spin-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            text-align: center;
+        }
+
+        .spin-slider {
+            width: 150px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #3b82f6 0%, #94a3b8 50%, #f59e0b 100%);
+            outline: none;
+            border-radius: 5px;
+        }
+
+        .spin-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border: 3px solid #8b5cf6;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .spin-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: white;
+            border: 3px solid #8b5cf6;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .spin-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: center;
+        }
+
+        .direction-control {
+            display: flex;
+            gap: 8px;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(37, 99, 235, 0.95);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 50px 70px;
+            border-radius: 24px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            display: none;
+        }
+
+        .game-over.show {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -40%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .game-over h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        .game-over .final-score {
+            font-size: 64px;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 24px;
+            text-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
+        }
+
+        .game-over .stats {
+            margin-bottom: 32px;
+            color: #64748b;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .stat-item {
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .stat-item .label {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .stat-item .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .achievement {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .sound-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .camera-toggle {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s;
+        }
+
+        .camera-toggle:hover {
+            background: #2563eb;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="ui-overlay">
+            <div class="sound-toggle" id="soundToggle">🔊</div>
+            <div class="camera-toggle" id="cameraToggle">📷 Follow Ball</div>
+
+            <div class="scoreboard">
+                <h2>🎳 Bowling Scorecard</h2>
+                <div class="frames" id="frames"></div>
+                <div class="game-info">
+                    <div class="total-score">
+                        Total Score: <strong id="totalScore">0</strong>
+                    </div>
+                    <div class="stats-badges">
+                        <div class="badge badge-strike">⚡ Strikes: <span id="strikeCount">0</span></div>
+                        <div class="badge badge-spare">🎯 Spares: <span id="spareCount">0</span></div>
+                    </div>
+                    <div class="total-score">
+                        Frame: <strong id="currentFrame">1</strong> / 10
+                    </div>
+                </div>
+            </div>
+
+            <div class="instructions" id="instructions">
+                🎯 Adjust power, spin, and aim - then BOWL to strike!
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <div class="power-control">
+                        <div class="power-label">POWER</div>
+                        <input type="range" class="power-slider" id="powerSlider" min="30" max="100" value="65">
+                        <div class="power-value" id="powerValue">65%</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="spin-control">
+                        <div class="spin-label">SPIN</div>
+                        <input type="range" class="spin-slider" id="spinSlider" min="-50" max="50" value="0">
+                        <div class="spin-value" id="spinValue">0</div>
+                    </div>
+                </div>
+
+                <div class="control-group direction-control">
+                    <button class="btn-primary" id="leftBtn">← LEFT</button>
+                    <button class="btn-success" id="bowlBtn">🎳 BOWL</button>
+                    <button class="btn-primary" id="rightBtn">RIGHT →</button>
+                </div>
+
+                <div class="control-group">
+                    <button class="btn-danger" id="resetBtn">NEW GAME</button>
+                </div>
+            </div>
+
+            <div class="game-over" id="gameOver">
+                <h2>🎉 Game Complete!</h2>
+                <div class="achievement" id="achievement"></div>
+                <div class="final-score" id="finalScore">0</div>
+                <div class="stats" id="finalStats"></div>
+                <button class="btn-success" style="padding: 16px 40px; font-size: 16px;" onclick="resetGame()">🎳 Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let ball, pins = [];
+        let lane, ballStartPos;
+        let ballVelocity = { x: 0, y: 0, z: 0 };
+        let ballAngularVelocity = { x: 0, y: 0, z: 0 };
+        let isBallMoving = false;
+        let direction = 0;
+        let power = 65;
+        let spin = 0;
+        let soundEnabled = true;
+        let followBall = false;
+        let ballTrail = [];
+
+        const gameState = {
+            frames: Array(10).fill(null).map(() => ({ throws: [], score: null, isStrike: false, isSpare: false })),
+            currentFrame: 0,
+            currentThrow: 0,
+            totalScore: 0,
+            pinsStanding: 10,
+            gameOver: false,
+            strikeCount: 0,
+            spareCount: 0
+        };
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(frequency, duration, type = 'sine') {
+            if (!soundEnabled) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playBowlSound() {
+            playSound(200, 0.3, 'sine');
+        }
+
+        function playPinSound(count) {
+            const baseFreq = 400 + (count * 50);
+            playSound(baseFreq, 0.2, 'square');
+        }
+
+        function playStrikeSound() {
+            setTimeout(() => playSound(800, 0.15, 'sine'), 0);
+            setTimeout(() => playSound(1000, 0.15, 'sine'), 100);
+            setTimeout(() => playSound(1200, 0.2, 'sine'), 200);
+        }
+
+        function playSpareSound() {
+            setTimeout(() => playSound(600, 0.15, 'sine'), 0);
+            setTimeout(() => playSound(800, 0.2, 'sine'), 100);
+        }
+
+        function initThreeJS() {
+            const canvas = document.getElementById('gameCanvas');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            scene.fog = new THREE.Fog(0x0a0a0a, 25, 100);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 10, -18);
+            camera.lookAt(0, 0, 10);
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const mainLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            mainLight.position.set(5, 20, -5);
+            mainLight.castShadow = true;
+            mainLight.shadow.camera.left = -25;
+            mainLight.shadow.camera.right = 25;
+            mainLight.shadow.camera.top = 25;
+            mainLight.shadow.camera.bottom = -25;
+            mainLight.shadow.mapSize.width = 2048;
+            mainLight.shadow.mapSize.height = 2048;
+            scene.add(mainLight);
+
+            const spotLight1 = new THREE.SpotLight(0xffd700, 0.8);
+            spotLight1.position.set(0, 18, 15);
+            spotLight1.angle = Math.PI / 5;
+            spotLight1.penumbra = 0.4;
+            spotLight1.castShadow = true;
+            scene.add(spotLight1);
+
+            const spotLight2 = new THREE.SpotLight(0x4a90e2, 0.4);
+            spotLight2.position.set(0, 15, -10);
+            spotLight2.angle = Math.PI / 4;
+            spotLight2.penumbra = 0.5;
+            scene.add(spotLight2);
+
+            createEnvironment();
+            createLane();
+            createBall();
+            createPins();
+            createWalls();
+
+            initUI();
+
+            animate();
+        }
+
+        function createEnvironment() {
+            const floorGeometry = new THREE.PlaneGeometry(100, 100);
+            const floorMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x1a1a1a,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -0.5;
+            floor.receiveShadow = true;
+            scene.add(floor);
+        }
+
+        function createLane() {
+            const laneGeometry = new THREE.BoxGeometry(4.2, 0.25, 42);
+            const laneTexture = createWoodTexture();
+            const laneMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xd4a574,
+                roughness: 0.3,
+                metalness: 0.1,
+                map: laneTexture
+            });
+            lane = new THREE.Mesh(laneGeometry, laneMaterial);
+            lane.position.set(0, -0.125, 5);
+            lane.receiveShadow = true;
+            scene.add(lane);
+
+            const arrowGeometry = new THREE.ConeGeometry(0.15, 0.4, 3);
+            const arrowMaterial = new THREE.MeshStandardMaterial({ color: 0xff6b6b });
+            for (let i = -10; i < 20; i += 4) {
+                const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+                arrow.rotation.x = Math.PI / 2;
+                arrow.position.set(0, 0.13, i);
+                scene.add(arrow);
+            }
+
+            const gutterGeometry = new THREE.BoxGeometry(0.6, 0.15, 42);
+            const gutterMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x1a1a1a,
+                roughness: 0.8
+            });
+            
+            const leftGutter = new THREE.Mesh(gutterGeometry, gutterMaterial);
+            leftGutter.position.set(-2.7, -0.15, 5);
+            leftGutter.receiveShadow = true;
+            scene.add(leftGutter);
+
+            const rightGutter = new THREE.Mesh(gutterGeometry, gutterMaterial);
+            rightGutter.position.set(2.7, -0.15, 5);
+            rightGutter.receiveShadow = true;
+            scene.add(rightGutter);
+
+            const lineGeometry = new THREE.BoxGeometry(4.2, 0.02, 0.12);
+            const lineMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xff0000,
+                emissive: 0xff0000,
+                emissiveIntensity: 0.5
+            });
+            const foulLine = new THREE.Mesh(lineGeometry, lineMaterial);
+            foulLine.position.set(0, 0.14, -15);
+            scene.add(foulLine);
+        }
+
+        function createWoodTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#d4a574';
+            ctx.fillRect(0, 0, 512, 512);
+            
+            for (let i = 0; i < 100; i++) {
+                ctx.strokeStyle = `rgba(139, 90, 43, ${Math.random() * 0.3})`;
+                ctx.lineWidth = Math.random() * 2;
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * 512, 0);
+                ctx.lineTo(Math.random() * 512, 512);
+                ctx.stroke();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 8);
+            return texture;
+        }
+
+        function createBall() {
+            const ballGeometry = new THREE.SphereGeometry(0.38, 32, 32);
+            const ballMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x0055ff,
+                roughness: 0.3,
+                metalness: 0.7,
+                emissive: 0x0033aa,
+                emissiveIntensity: 0.2
+            });
+            ball = new THREE.Mesh(ballGeometry, ballMaterial);
+            ballStartPos = { x: 0, y: 0.38, z: -14 };
+            ball.position.set(ballStartPos.x, ballStartPos.y, ballStartPos.z);
+            ball.castShadow = true;
+
+            const holeGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+            const holeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            for (let i = 0; i < 3; i++) {
+                const hole = new THREE.Mesh(holeGeometry, holeMaterial);
+                hole.position.set(Math.cos(i * Math.PI * 0.6) * 0.15, Math.sin(i * Math.PI * 0.6) * 0.15, 0.35);
+                ball.add(hole);
+            }
+
+            scene.add(ball);
+        }
+
+        function createPins() {
+            const pinPositions = [
+                { x: 0, z: 22 },
+                { x: -0.55, z: 23.2 }, { x: 0.55, z: 23.2 },
+                { x: -1.1, z: 24.4 }, { x: 0, z: 24.4 }, { x: 1.1, z: 24.4 },
+                { x: -1.65, z: 25.6 }, { x: -0.55, z: 25.6 }, { x: 0.55, z: 25.6 }, { x: 1.65, z: 25.6 }
+            ];
+
+            pinPositions.forEach((pos, index) => {
+                const pin = createPin(pos.x, 0.8, pos.z);
+                pin.userData.id = index;
+                pin.userData.standing = true;
+                pin.userData.wobble = 0;
+                pins.push(pin);
+                scene.add(pin);
+            });
+        }
+
+        function createPin(x, y, z) {
+            const pinGroup = new THREE.Group();
+
+            const bodyGeometry = new THREE.CylinderGeometry(0.1, 0.2, 1.3, 16);
+            const pinMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xf5f5f5,
+                roughness: 0.4,
+                metalness: 0.2
+            });
+            const body = new THREE.Mesh(bodyGeometry, pinMaterial);
+            body.castShadow = true;
+            pinGroup.add(body);
+
+            const neckGeometry = new THREE.CylinderGeometry(0.08, 0.1, 0.3, 16);
+            const neck = new THREE.Mesh(neckGeometry, pinMaterial);
+            neck.position.y = 0.5;
+            neck.castShadow = true;
+            pinGroup.add(neck);
+
+            const stripeGeometry = new THREE.CylinderGeometry(0.11, 0.21, 0.35, 16);
+            const stripeMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xff0000,
+                roughness: 0.5
+            });
+            const stripe1 = new THREE.Mesh(stripeGeometry, stripeMaterial);
+            stripe1.position.y = 0.25;
+            pinGroup.add(stripe1);
+
+            const stripe2 = new THREE.Mesh(stripeGeometry, stripeMaterial);
+            stripe2.position.y = -0.25;
+            pinGroup.add(stripe2);
+
+            pinGroup.position.set(x, y, z);
+            return pinGroup;
+        }
+
+        function createWalls() {
+            const wallMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x0a0a0a,
+                side: THREE.DoubleSide,
+                roughness: 0.9
+            });
+
+            const backWallGeometry = new THREE.BoxGeometry(8, 6, 0.5);
+            const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+            backWall.position.set(0, 3, 28);
+            scene.add(backWall);
+
+            const sideWallGeometry = new THREE.BoxGeometry(0.5, 3, 45);
+            const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+            leftWall.position.set(-4, 1.5, 5);
+            scene.add(leftWall);
+
+            const rightWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+            rightWall.position.set(4, 1.5, 5);
+            scene.add(rightWall);
+        }
+
+        function initUI() {
+            const framesContainer = document.getElementById('frames');
+            for (let i = 0; i < 10; i++) {
+                const frameDiv = document.createElement('div');
+                frameDiv.className = 'frame';
+                frameDiv.id = `frame-${i}`;
+                if (i === 0) frameDiv.classList.add('active');
+
+                frameDiv.innerHTML = `
+                    <div class="frame-number">Frame ${i + 1}</div>
+                    <div class="throws" id="throws-${i}">
+                        <div class="throw" id="throw-${i}-0">-</div>
+                        <div class="throw" id="throw-${i}-1">-</div>
+                        ${i === 9 ? '<div class="throw" id="throw-9-2">-</div>' : ''}
+                    </div>
+                    <div class="frame-score" id="score-${i}">-</div>
+                `;
+                framesContainer.appendChild(frameDiv);
+            }
+
+            document.getElementById('powerSlider').addEventListener('input', (e) => {
+                power = parseInt(e.target.value);
+                document.getElementById('powerValue').textContent = `${power}%`;
+            });
+
+            document.getElementById('spinSlider').addEventListener('input', (e) => {
+                spin = parseInt(e.target.value);
+                document.getElementById('spinValue').textContent = spin;
+            });
+
+            document.getElementById('leftBtn').addEventListener('click', () => {
+                direction = Math.max(-1.2, direction - 0.2);
+            });
+
+            document.getElementById('rightBtn').addEventListener('click', () => {
+                direction = Math.min(1.2, direction + 0.2);
+            });
+
+            document.getElementById('bowlBtn').addEventListener('click', throwBall);
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+
+            document.getElementById('soundToggle').addEventListener('click', () => {
+                soundEnabled = !soundEnabled;
+                document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+            });
+
+            document.getElementById('cameraToggle').addEventListener('click', () => {
+                followBall = !followBall;
+                document.getElementById('cameraToggle').textContent = followBall ? '📷 Static View' : '📷 Follow Ball';
+            });
+        }
+
+        function throwBall() {
+            if (isBallMoving || gameState.gameOver) return;
+
+            isBallMoving = true;
+            document.getElementById('bowlBtn').disabled = true;
+            ballTrail = [];
+
+            const powerFactor = power / 100;
+            ballVelocity.z = 0.9 * powerFactor;
+            ballVelocity.x = direction * 0.12;
+            ballVelocity.y = 0;
+
+            ballAngularVelocity.x = -ballVelocity.z * 4;
+            ballAngularVelocity.z = ballVelocity.x * 3;
+            ballAngularVelocity.y = (spin / 50) * 0.3;
+
+            playBowlSound();
+            document.getElementById('instructions').textContent = '🎳 Ball rolling...';
+        }
+
+        function resetBall() {
+            ball.position.set(ballStartPos.x, ballStartPos.y, ballStartPos.z);
+            ball.rotation.set(0, 0, 0);
+            ballVelocity = { x: 0, y: 0, z: 0 };
+            ballAngularVelocity = { x: 0, y: 0, z: 0 };
+            isBallMoving = false;
+            direction = 0;
+            spin = 0;
+            ballTrail = [];
+            document.getElementById('bowlBtn').disabled = false;
+            document.getElementById('spinSlider').value = 0;
+            document.getElementById('spinValue').textContent = '0';
+        }
+
+        function updateBall() {
+            if (!isBallMoving) return;
+
+            ball.position.x += ballVelocity.x;
+            ball.position.y += ballVelocity.y;
+            ball.position.z += ballVelocity.z;
+
+            ballVelocity.x += ballAngularVelocity.y * 0.01;
+
+            ball.rotation.x += ballAngularVelocity.x * 0.016;
+            ball.rotation.z += ballAngularVelocity.z * 0.016;
+            ball.rotation.y += ballAngularVelocity.y * 0.016;
+
+            ballVelocity.z *= 0.985;
+            ballVelocity.x *= 0.99;
+            ballAngularVelocity.y *= 0.98;
+
+            if (Math.abs(ball.position.x) > 2.3) {
+                ballVelocity.x *= -0.4;
+                ball.position.x = Math.sign(ball.position.x) * 2.3;
+            }
+
+            if (followBall && ball.position.z > -10) {
+                camera.position.z = ball.position.z - 8;
+                camera.position.y = 8 + (ball.position.z / 10);
+                camera.lookAt(ball.position.x, 0, ball.position.z + 5);
+            }
+
+            if (ball.position.z > 28 || (Math.abs(ballVelocity.z) < 0.008 && Math.abs(ballVelocity.x) < 0.008)) {
+                setTimeout(() => {
+                    countPins();
+                    if (followBall) {
+                        camera.position.set(0, 10, -18);
+                        camera.lookAt(0, 0, 10);
+                    }
+                    resetBall();
+                }, 1200);
+            }
+
+            checkCollisions();
+        }
+
+        function checkCollisions() {
+            pins.forEach(pin => {
+                if (!pin.userData.standing) return;
+
+                const distance = Math.sqrt(
+                    Math.pow(ball.position.x - pin.position.x, 2) +
+                    Math.pow(ball.position.z - pin.position.z, 2)
+                );
+
+                if (distance < 0.55) {
+                    knockDownPin(pin);
+                    playPinSound(1);
+                    
+                    const angle = Math.atan2(
+                        pin.position.z - ball.position.z,
+                        pin.position.x - ball.position.x
+                    );
+                    const force = Math.sqrt(ballVelocity.x ** 2 + ballVelocity.z ** 2);
+                    pin.userData.velocity = {
+                        x: Math.cos(angle) * force * 0.6,
+                        z: Math.sin(angle) * force * 0.6
+                    };
+                }
+
+                if (pin.userData.standing && pin.userData.wobble > 0) {
+                    pin.userData.wobble *= 0.9;
+                    pin.rotation.x = Math.sin(Date.now() * 0.01) * pin.userData.wobble;
+                    pin.rotation.z = Math.cos(Date.now() * 0.01) * pin.userData.wobble;
+                }
+            });
+
+            pins.forEach((pin1, i) => {
+                if (!pin1.userData.standing) {
+                    if (pin1.userData.velocity) {
+                        pin1.position.x += pin1.userData.velocity.x;
+                        pin1.position.z += pin1.userData.velocity.z;
+                        pin1.userData.velocity.x *= 0.94;
+                        pin1.userData.velocity.z *= 0.94;
+                    }
+
+                    pins.forEach((pin2, j) => {
+                        if (i !== j && pin2.userData.standing) {
+                            const dist = Math.sqrt(
+                                Math.pow(pin1.position.x - pin2.position.x, 2) +
+                                Math.pow(pin1.position.z - pin2.position.z, 2)
+                            );
+                            if (dist < 0.45) {
+                                pin2.userData.wobble = 0.3;
+                                if (Math.random() > 0.3) {
+                                    knockDownPin(pin2);
+                                    playPinSound(1);
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function knockDownPin(pin) {
+            if (!pin.userData.standing) return;
+            
+            pin.userData.standing = false;
+            
+            const fallAnimation = { progress: 0 };
+            const randomAngle = (Math.random() - 0.5) * Math.PI;
+            const animate = () => {
+                if (fallAnimation.progress < 1) {
+                    fallAnimation.progress += 0.04;
+                    pin.rotation.x = (Math.PI / 2) * fallAnimation.progress;
+                    pin.rotation.y = randomAngle * fallAnimation.progress;
+                    pin.position.y = 0.8 - (0.6 * fallAnimation.progress);
+                    requestAnimationFrame(animate);
+                }
+            };
+            animate();
+        }
+
+        function countPins() {
+            const pinsKnockedDown = pins.filter(p => !p.userData.standing).length;
+            const currentFrame = gameState.currentFrame;
+            const currentThrow = gameState.currentThrow;
+
+            gameState.frames[currentFrame].throws[currentThrow] = pinsKnockedDown;
+
+            updateScoreDisplay(currentFrame, currentThrow, pinsKnockedDown);
+
+            if (currentFrame < 9) {
+                if (currentThrow === 0) {
+                    if (pinsKnockedDown === 10) {
+                        gameState.frames[currentFrame].isStrike = true;
+                        gameState.strikeCount++;
+                        document.getElementById(`frame-${currentFrame}`).classList.add('strike');
+                        playStrikeSound();
+                        document.getElementById('instructions').innerHTML = '⚡ <strong>STRIKE!</strong> All pins down!';
+                        nextFrame();
+                    } else {
+                        gameState.currentThrow = 1;
+                        document.getElementById('instructions').textContent = `🎯 ${10 - pinsKnockedDown} pins remaining - knock them down!`;
+                    }
+                } else {
+                    if (gameState.frames[currentFrame].throws[0] + pinsKnockedDown === 10) {
+                        gameState.frames[currentFrame].isSpare = true;
+                        gameState.spareCount++;
+                        document.getElementById(`frame-${currentFrame}`).classList.add('spare');
+                        playSpareSound();
+                        document.getElementById('instructions').innerHTML = '🎯 <strong>SPARE!</strong> Cleared the pins!';
+                    }
+                    nextFrame();
+                }
+            } else {
+                handle10thFrame(pinsKnockedDown);
+            }
+
+            calculateScore();
+            document.getElementById('strikeCount').textContent = gameState.strikeCount;
+            document.getElementById('spareCount').textContent = gameState.spareCount;
+        }
+
+        function handle10thFrame(pinsKnockedDown) {
+            const frame = gameState.frames[9];
+            const throwIndex = gameState.currentThrow;
+
+            if (throwIndex === 0) {
+                if (pinsKnockedDown === 10) {
+                    frame.isStrike = true;
+                    gameState.strikeCount++;
+                    playStrikeSound();
+                    resetPins();
+                    gameState.currentThrow = 1;
+                    document.getElementById('instructions').innerHTML = '⚡ <strong>STRIKE!</strong> Bonus ball 1 of 2';
+                } else {
+                    gameState.currentThrow = 1;
+                    document.getElementById('instructions').textContent = '🎯 Second ball - clear the remaining pins!';
+                }
+            } else if (throwIndex === 1) {
+                const firstThrow = frame.throws[0];
+                if (firstThrow === 10 || firstThrow + pinsKnockedDown === 10) {
+                    if (firstThrow !== 10 && firstThrow + pinsKnockedDown === 10) {
+                        frame.isSpare = true;
+                        gameState.spareCount++;
+                        playSpareSound();
+                    }
+                    resetPins();
+                    gameState.currentThrow = 2;
+                    document.getElementById('instructions').textContent = '🎳 Final bonus ball!';
+                } else {
+                    endGame();
+                }
+            } else {
+                endGame();
+            }
+        }
+
+        function nextFrame() {
+            gameState.currentFrame++;
+            gameState.currentThrow = 0;
+            resetPins();
+
+            document.getElementById(`frame-${gameState.currentFrame - 1}`).classList.remove('active');
+            if (gameState.currentFrame < 10) {
+                document.getElementById(`frame-${gameState.currentFrame}`).classList.add('active');
+            }
+
+            document.getElementById('currentFrame').textContent = gameState.currentFrame + 1;
+            
+            setTimeout(() => {
+                document.getElementById('instructions').textContent = '🎯 New frame! Set your power, spin, and aim - then BOWL!';
+            }, 2000);
+        }
+
+        function resetPins() {
+            pins.forEach(pin => {
+                const originalPos = pin.userData.originalPos || { x: pin.position.x, y: 0.8, z: pin.position.z };
+                if (!pin.userData.originalPos) {
+                    pin.userData.originalPos = { ...originalPos };
+                }
+                pin.position.set(originalPos.x, originalPos.y, originalPos.z);
+                pin.rotation.set(0, 0, 0);
+                pin.userData.standing = true;
+                pin.userData.velocity = null;
+                pin.userData.wobble = 0;
+            });
+        }
+
+        function updateScoreDisplay(frame, throwIndex, pinsKnockedDown) {
+            const throwElement = document.getElementById(`throw-${frame}-${throwIndex}`);
+            
+            if (pinsKnockedDown === 10 && throwIndex === 0 && frame < 9) {
+                throwElement.textContent = 'X';
+                throwElement.style.color = '#f59e0b';
+                throwElement.style.fontWeight = '900';
+            } else if (throwIndex === 1 && gameState.frames[frame].throws[0] + pinsKnockedDown === 10) {
+                throwElement.textContent = '/';
+                throwElement.style.color = '#3b82f6';
+                throwElement.style.fontWeight = '900';
+            } else if (pinsKnockedDown === 10) {
+                throwElement.textContent = 'X';
+                throwElement.style.color = '#f59e0b';
+                throwElement.style.fontWeight = '900';
+            } else if (pinsKnockedDown === 0) {
+                throwElement.textContent = '-';
+            } else {
+                throwElement.textContent = pinsKnockedDown;
+            }
+        }
+
+        function calculateScore() {
+            let totalScore = 0;
+
+            for (let i = 0; i < 10; i++) {
+                const frame = gameState.frames[i];
+                
+                if (i < 9) {
+                    if (frame.isStrike) {
+                        let bonus = 0;
+                        const nextFrame = gameState.frames[i + 1];
+                        if (nextFrame.throws[0] !== undefined) {
+                            bonus += nextFrame.throws[0];
+                            if (nextFrame.isStrike && i < 8) {
+                                const nextNextFrame = gameState.frames[i + 2];
+                                if (nextNextFrame.throws[0] !== undefined) {
+                                    bonus += nextNextFrame.throws[0];
+                                }
+                            } else if (nextFrame.throws[1] !== undefined) {
+                                bonus += nextFrame.throws[1];
+                            }
+                        }
+                        totalScore += 10 + bonus;
+                        frame.score = totalScore;
+                    } else if (frame.isSpare) {
+                        let bonus = 0;
+                        const nextFrame = gameState.frames[i + 1];
+                        if (nextFrame.throws[0] !== undefined) {
+                            bonus = nextFrame.throws[0];
+                        }
+                        totalScore += 10 + bonus;
+                        frame.score = totalScore;
+                    } else if (frame.throws[0] !== undefined && frame.throws[1] !== undefined) {
+                        totalScore += frame.throws[0] + frame.throws[1];
+                        frame.score = totalScore;
+                    }
+                } else {
+                    const sum = frame.throws.reduce((a, b) => (a || 0) + (b || 0), 0);
+                    totalScore += sum;
+                    frame.score = totalScore;
+                }
+
+                if (frame.score !== null) {
+                    document.getElementById(`score-${i}`).textContent = frame.score;
+                }
+            }
+
+            gameState.totalScore = totalScore;
+            document.getElementById('totalScore').textContent = totalScore;
+        }
+
+        function getAchievement(score, strikes, spares) {
+            if (score === 300) return '🏆 PERFECT GAME!';
+            if (score >= 250) return '⭐ AMAZING PERFORMANCE!';
+            if (score >= 200) return '🔥 EXCELLENT GAME!';
+            if (strikes >= 8) return '⚡ STRIKE MASTER!';
+            if (score >= 150) return '👏 GREAT JOB!';
+            if (score >= 100) return '👍 GOOD GAME!';
+            return '🎳 KEEP PRACTICING!';
+        }
+
+        function endGame() {
+            gameState.gameOver = true;
+            calculateScore();
+            
+            const strikes = gameState.strikeCount;
+            const spares = gameState.spareCount;
+            const totalScore = gameState.totalScore;
+            
+            document.getElementById('achievement').textContent = getAchievement(totalScore, strikes, spares);
+            document.getElementById('finalScore').textContent = totalScore;
+            document.getElementById('finalStats').innerHTML = `
+                <div class="stat-item">
+                    <div class="label">Strikes</div>
+                    <div class="value">${strikes}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Spares</div>
+                    <div class="value">${spares}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Open Frames</div>
+                    <div class="value">${9 - strikes - spares}</div>
+                </div>
+            `;
+            document.getElementById('gameOver').classList.add('show');
+            document.getElementById('instructions').style.display = 'none';
+            
+            if (totalScore >= 200) {
+                playStrikeSound();
+                setTimeout(() => playStrikeSound(), 300);
+            }
+        }
+
+        function resetGame() {
+            gameState.frames = Array(10).fill(null).map(() => ({ throws: [], score: null, isStrike: false, isSpare: false }));
+            gameState.currentFrame = 0;
+            gameState.currentThrow = 0;
+            gameState.totalScore = 0;
+            gameState.gameOver = false;
+            gameState.strikeCount = 0;
+            gameState.spareCount = 0;
+
+            resetBall();
+            resetPins();
+
+            for (let i = 0; i < 10; i++) {
+                document.getElementById(`throw-${i}-0`).textContent = '-';
+                document.getElementById(`throw-${i}-0`).style.color = '#1e293b';
+                document.getElementById(`throw-${i}-1`).textContent = '-';
+                document.getElementById(`throw-${i}-1`).style.color = '#1e293b';
+                if (i === 9) {
+                    document.getElementById(`throw-9-2`).textContent = '-';
+                    document.getElementById(`throw-9-2`).style.color = '#1e293b';
+                }
+                document.getElementById(`score-${i}`).textContent = '-';
+                document.getElementById(`frame-${i}`).classList.remove('active', 'strike', 'spare');
+            }
+            document.getElementById('frame-0').classList.add('active');
+
+            document.getElementById('totalScore').textContent = '0';
+            document.getElementById('currentFrame').textContent = '1';
+            document.getElementById('strikeCount').textContent = '0';
+            document.getElementById('spareCount').textContent = '0';
+            document.getElementById('gameOver').classList.remove('show');
+            document.getElementById('instructions').style.display = 'block';
+            document.getElementById('instructions').textContent = '🎯 Adjust power, spin, and aim - then BOWL to strike!';
+
+            camera.position.set(0, 10, -18);
+            camera.lookAt(0, 0, 10);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateBall();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        initThreeJS();
+    </script>
+</body>
+</html>
