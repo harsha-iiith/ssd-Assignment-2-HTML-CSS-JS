@@ -325,30 +325,25 @@
         >
         <!-- Radio button for 4 pieces -->
         <label
-          ><input type="radio" name="difficulty" value="9" /> 9 pieces
-          (3x3)</label
+          ><input type="radio" name="difficulty" value="20" /> 20 pieces
+          (4x5)</label
         >
-        <!-- Radio button for 9 pieces -->
+        <!-- Radio button for 20 pieces -->
         <label
-          ><input type="radio" name="difficulty" value="16" /> 16 pieces
-          (4x4)</label
+          ><input type="radio" name="difficulty" value="40" /> 40 pieces
+          (5x8)</label
         >
-        <!-- Radio button for 16 pieces -->
+        <!-- Radio button for 40 pieces -->
         <label
-          ><input type="radio" name="difficulty" value="25" /> 25 pieces
-          (5x5)</label
+          ><input type="radio" name="difficulty" value="80" /> 80 pieces
+          (8x10)</label
         >
-        <!-- Radio button for 25 pieces -->
+        <!-- Radio button for 80 pieces -->
         <label
-          ><input type="radio" name="difficulty" value="36" /> 36 pieces
-          (6x6)</label
+          ><input type="radio" name="difficulty" value="100" /> 100 pieces
+          (10x10)</label
         >
-        <!-- Radio button for 36 pieces -->
-        <label
-          ><input type="radio" name="difficulty" value="49" /> 49 pieces
-          (7x7)</label
-        >
-        <!-- Radio button for 49 pieces -->
+        <!-- Radio button for 100 pieces -->
       </div>
       <!-- End of difficulty section -->
 
@@ -399,7 +394,7 @@
         <!-- Step 2 -->
         <p>
           <strong>Step 3:</strong> Select a difficulty level (number of pieces:
-          4, 9, 16, 25, or 36).
+          4, 20, 40, 80, or 100).
         </p>
         <!-- Step 3 -->
         <p>
@@ -487,14 +482,21 @@
         ).value; // Get selected difficulty
         const numPieces = parseInt(difficulty); // Convert to number
 
-        gridCols = Math.sqrt(numPieces); // Calculate columns
-        gridRows = Math.sqrt(numPieces); // Calculate rows
-
-        if (gridCols % 1 !== 0) {
-          // If not a perfect square
-          alert("Invalid difficulty level!"); // Show alert
-          return; // Exit
+        const configMap = {
+          4: { cols: 2, rows: 2 },
+          20: { cols: 5, rows: 4 },
+          40: { cols: 8, rows: 5 },
+          80: { cols: 10, rows: 8 },
+          100: { cols: 10, rows: 10 },
+        };
+        const cfg = configMap[numPieces];
+        if (!cfg) {
+          alert("Invalid difficulty level!");
+          return;
         }
+
+        gridCols = cfg.cols; // Set columns from mapping
+        gridRows = cfg.rows; // Set rows from mapping
 
         pieceSize = 400 / gridCols; // Calculate piece size
 
@@ -502,6 +504,8 @@
         puzzleArea.innerHTML = ""; // Clear previous pieces
         puzzleArea.style.width = gridCols * pieceSize + "px"; // Set width
         puzzleArea.style.height = gridRows * pieceSize + "px"; // Set height
+        const areaWidth = gridCols * pieceSize;
+        const areaHeight = gridRows * pieceSize
 
         canvas = document.createElement("canvas"); // Create canvas for slicing
         ctx = canvas.getContext("2d"); // Get 2D context
@@ -541,8 +545,8 @@
             piece.dataset.correctRow = row; // Store correct row
             piece.dataset.correctCol = col; // Store correct column
 
-            piece.style.left = Math.random() * (400 - pieceSize) + "px"; // Random left position
-            piece.style.top = Math.random() * (400 - pieceSize) + "px"; // Random top position
+            piece.style.left = Math.random() * (areaWidth - pieceSize) + "px"; // Random left position within area
+            piece.style.top = Math.random() * (areaHeight - pieceSize) + "px"; // Random top position within area
 
             piece.addEventListener("mousedown", startDrag); // Add drag event listener
             pieces.push(piece); // Add to pieces array
@@ -570,10 +574,13 @@
 
       function shufflePieces() {
         // Function to shuffle pieces
+        const area = document.getElementById("puzzleArea");
+        const areaWidth = area.clientWidth;
+        const areaHeight = area.clientHeight;
         pieces.forEach((piece) => {
           // Loop through pieces
-          piece.style.left = Math.random() * (400 - pieceSize) + "px"; // Random left
-          piece.style.top = Math.random() * (400 - pieceSize) + "px"; // Random top
+          piece.style.left = Math.random() * (areaWidth - pieceSize) + "px"; // Random left
+          piece.style.top = Math.random() * (areaHeight - pieceSize) + "px"; // Random top
           piece.classList.remove("correct"); // Remove correct class
         });
         document.getElementById("status").textContent = "Pieces shuffled!"; // Update status
